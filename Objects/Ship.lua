@@ -1,6 +1,26 @@
 local Ship = {}
 Ship.__index = Ship
-
+--[[
+    Ship.new
+    Creates a new Ship object
+    config: A table containing the ship's configuration
+    config {
+        position: A table containing the ship's position { x, y }
+        speed: The ship's speed
+        angle: The ship's angle
+        spritePath: The path to the ship's sprite
+        spriteWidth: The width of the ship's sprite
+        spriteHeight: The height of the ship's sprite
+        spriteScale: The scale of the ship's sprite
+        tailPath: The path to the ship's tail sprite
+        tailWidth: The width of the ship's tail sprite
+        tailHeight: The height of the ship's tail sprite
+        tailScale: The scale of the ship's tail sprite
+        animationFrames: The number of animation frames
+        frameTime: The time between animation frames
+    }
+    Returns the new Ship objects
+]]
 function Ship.new(config)
     local self = setmetatable({}, Ship)
     self.position = config.position or { x = 400, y = 500 }
@@ -8,8 +28,8 @@ function Ship.new(config)
     self.angle = config.angle or 0
     self.sprite = {
         image = love.graphics.newImage(config.spritePath),
-        width = config.spriteWidth,
-        height = config.spriteHeight,
+        width = config.spriteWidth or love.graphics.newImage(config.spritePath):getWidth(),
+        height = config.spriteHeight or love.graphics.newImage(config.spritePath):getHeight(),
         spriteScale = config.spriteScale or {x = 0.3, y = 0.4}
     }
     self.hitbox = {
