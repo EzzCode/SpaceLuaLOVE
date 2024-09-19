@@ -1,6 +1,7 @@
 local Player = require('Objects.Player')
 local Game = require('States.Game')
 local Menu = require('States.Menu')
+local Enemy = require('Objects.Enemy')
 
 function love.mousepressed(x, y, button)
     if not game.state["running"] then      -- if game state is not running
@@ -33,6 +34,7 @@ function love.load()
     game = Game()
     game:findScaleFactor()
     Player = Player:new()
+    Enemy = Enemy:new()
     menu = Menu.new(game, Player)
 
     -- Explosion properties
@@ -73,6 +75,7 @@ function love.update(dt)
     if game.state["running"] then
         -- Scroll the background horizontally (can also add vertical scrolling if needed)
         -- Scroll the background horizontally
+        Enemy.cannons.sprite.angle = Enemy.cannons.sprite.angle + math.pi * dt
         game.background.x = (game.background.x + game.background.scrollSpeed * dt) % (game.background.width * game.background.scaleFactor)
         if game.lives > 0 then
             Player:move(dt)
@@ -120,6 +123,7 @@ function love.draw()
             love.graphics.print('Lives: ' .. game.lives, 10, 10)
             love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 30)
             Player:draw()
+            Enemy:draw()
             -- Draw bullets
             Player:drawBullets()
         else
