@@ -79,6 +79,7 @@ function love.update(dt)
         game.background.x = (game.background.x + game.background.scrollSpeed * dt) % (game.background.width * game.background.scaleFactor)
         if game.lives > 0 then
             Player:move(dt)
+            Enemy:moveCannons(Player, dt)
             Player.ship.animation.elapsedTime = Player.ship.animation.elapsedTime + dt
             if Player.ship.animation.elapsedTime >= Player.ship.animation.frameTime then
                 Player.ship.animation.currentFrame = Player.ship.animation.currentFrame + 1
@@ -109,6 +110,7 @@ function love.update(dt)
         end
         -- Update bullets
         Player:updateBullets(dt)
+        Enemy:update(dt)
     elseif game.state["paused"] then
 
     end
@@ -126,6 +128,7 @@ function love.draw()
             Enemy:draw()
             -- Draw bullets
             Player:drawBullets()
+            Enemy:drawBullets()
         else
             -- Draw explosion if no lives left
             if explosion.animation.playing then
