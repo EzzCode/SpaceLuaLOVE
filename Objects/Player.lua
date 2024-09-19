@@ -1,5 +1,5 @@
 local Ship = require 'Objects.Ship'
-
+local Bullet = require 'Objects.Bullet'
 local Player = {}
 Player.__index = Player
 
@@ -17,13 +17,10 @@ function Player.new()
         animationFrames = 2,
         frameTime = 0.08
     })
-    self.bullets = {
-        list = {},
+    self.bullets = Bullet.new({
         speed = 1000,
-        sprite = {
-            image = love.graphics.newImage('Assets/OrangeSpin__000.png')
-        }
-    }
+        spritePath = 'Assets/OrangeSpin__000.png'
+    })
     return self
 end
 
@@ -39,56 +36,13 @@ function Player:fireBullets()
     -- Approximate X and Y offsets from the center to each cannon
     local cannonOffsetX = 20 -- Horizontal distance from center to cannons
     local cannonOffsetY = 70 -- Vertical distance from center to cannons
-
-    -- Create two bullets, one for each cannon
-    for i = 1, 2 do
-        local sign = (i == 1) and 1 or -1 -- 1 for the right cannon, -1 for the left cannon
-
-        -- Calculate the cannon's position relative to the ship
-        local cannonX = self.ship.position.x + math.cos(self.ship.angle - math.pi / 2) * cannonOffsetY -
-            sign * math.sin(self.ship.angle - math.pi / 2) * cannonOffsetX
-        local cannonY = self.ship.position.y + math.sin(self.ship.angle - math.pi / 2) * cannonOffsetY +
-            sign * math.cos(self.ship.angle - math.pi / 2) * cannonOffsetX
-
-        -- Create the bullet with its starting position and angle
-        local bullet = {
-            x = cannonX,                             -- Cannon position
-            y = cannonY,
-            angle = self.ship.angle - math.pi / 2, -- Bullet follows the ship's angle
-        }
-
-        -- Insert the bullet into the bullets table
-        table.insert(self.bullets.list, bullet)
-    end
+    self.bullets:fire(cannonOffsetX, cannonOffsetY, self.ship.angle - math.pi / 2, self.ship.position.x, self.ship.position.y, 2)
 end
 function Player:drawBullets()
-    for i = 1, #self.bullets.list do
-        local bullet = self.bullets.list[i]
-        love.graphics.draw(
-            self.bullets.sprite.image,
-            bullet.x,
-            bullet.y,
-            bullet.angle,
-            0.4, 0.4,
-            self.bullets.sprite.image:getWidth() / 2,
-            self.bullets.sprite.image:getHeight() / 2
-        )
-    end
+    self.bullets:draw()
 end
 function Player:updateBullets(dt)
-    for i = #self.bullets.list, 1, -1 do
-        local bullet = self.bullets.list[i]
-
-        -- Move bullet in the direction of the ship's angle
-        bullet.x = bullet.x + math.cos(bullet.angle) * self.bullets.speed * dt
-        bullet.y = bullet.y + math.sin(bullet.angle) * self.bullets.speed * dt
-
-        -- Remove bullets that go off-screen
-        if bullet.x < 0 or bullet.x > love.graphics.getWidth() or bullet.y < 0 or bullet.y > love.graphics.getHeight() then
-            table.remove(self.bullets.list, i)
-        end
-    end
-    
+    self.bullets:updateBullets(dt)    
 end
 
 
