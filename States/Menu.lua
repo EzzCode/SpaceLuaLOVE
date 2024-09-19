@@ -17,15 +17,8 @@ function Menu.new(game, player)
         end,
         fullScreen = function()
             love.window.setFullscreen(not love.window.getFullscreen())
-                        -- Recalculate screen dimensions and scale factor
-            screenWidth, screenHeight = love.graphics.getWidth(), love.graphics.getHeight()
-            
-            -- Recalculate the scale factor to fit the background image
-            if screenHeight < backgroundImageHeight then
-                scaleFactor = screenHeight / backgroundImageHeight
-            else
-                scaleFactor = 1 -- no scaling if the image fits the screen
-            end
+            -- Recalculate screen dimensions and scale factor
+            self.game:findScaleFactor()
         end,
         changeGameState = function(state)
             self.game:changeGameState(state)

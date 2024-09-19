@@ -1,10 +1,6 @@
-local button = require('Objects.Button')
 local Player = require('Objects.Player')
 local Game = require('States.Game')
 local Menu = require('States.Menu')
-
-local backgroundImage
-
 
 function love.mousepressed(x, y, button)
     if not game.state["running"] then      -- if game state is not running
@@ -33,30 +29,11 @@ function love.keypressed(key)
 end
 
 function love.load()
-    -- Load the background image (ensure it's 3000x1000)
+    -- Set up the screen dimensions
     game = Game()
+    game:findScaleFactor()
     Player = Player:new()
     menu = Menu.new(game, Player)
-
-    backgroundImage = love.graphics.newImage("Assets/Space Background1.png")
-
-    -- Get the dimensions of the image
-    backgroundImageWidth = backgroundImage:getWidth()
-    backgroundImageHeight = backgroundImage:getHeight()
-    -- Set up the screen dimensions
-    screenWidth, screenHeight = love.graphics.getWidth(), love.graphics.getHeight()
-
-    -- Calculate the scaling factor to fit the image based on height
-    if screenHeight < backgroundImageHeight then
-        scaleFactor = screenHeight / backgroundImageHeight
-    else
-        scaleFactor = 1 -- no scaling if the image fits the screen
-    end
-    -- Initial position and speed for background scrolling
-    backgroundScrollSpeed = 100 -- pixels per second
-    backgroundX = 0
-    backgroundY = 0
-
 
     -- Explosion properties
     _G.explosion = {
@@ -96,7 +73,7 @@ function love.update(dt)
     if game.state["running"] then
         -- Scroll the background horizontally (can also add vertical scrolling if needed)
         -- Scroll the background horizontally
-        backgroundX = (backgroundX + backgroundScrollSpeed * dt) % (backgroundImageWidth * scaleFactor)
+        game.background.x = (game.background.x + game.background.scrollSpeed * dt) % (game.background.width * game.background.scaleFactor)
         if game.lives > 0 then
             Player:move(dt)
             Player.ship.animation.elapsedTime = Player.ship.animation.elapsedTime + dt
@@ -137,17 +114,8 @@ end
 function love.draw()
     -- Draw the ship if it has lives
     if game.state["running"] then
-        -- Calculate how many tiles are needed horizontally and vertically
-        local tilesX = math.ceil(screenWidth / backgroundImageWidth) + 1
-        local tilesY = math.ceil(screenHeight / backgroundImageHeight) + 1
-
-        -- Draw the tiled background with proper scrolling
-        for x = 0, tilesX - 1 do
-            for y = 0, tilesY - 1 do
-                love.graphics.draw(backgroundImage, x * backgroundImageWidth * scaleFactor - backgroundX,
-                    y * backgroundImageHeight * scaleFactor - backgroundY, 0, scaleFactor, scaleFactor)
-            end
-        end
+        --Draw Background
+        game:drawBackground()
         if game.lives > 0 then
             love.graphics.print('Lives: ' .. game.lives, 10, 10)
             love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 30)
@@ -182,9 +150,7 @@ function love.draw()
             love.graphics.print('Lives: ' .. game.lives, 10, 10)
             local r, g, b = love.graphics.getColor()
             love.graphics.setColor(r, g, b, 0.5)
-            love.graphics.draw(backgroundImage, - backgroundX,
-            - backgroundY, 0, scaleFactor, scaleFactor)
-            
+            game:drawBackground()
             Player:draw()
             -- Draw bullets
             Player:drawBullets()
