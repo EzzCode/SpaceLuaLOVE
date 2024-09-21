@@ -21,93 +21,253 @@ Ship.__index = Ship
     }
     Returns the new Ship objects
 ]]
+
 function Ship.new(config)
     local self = setmetatable({}, Ship)
     self.position = config.position or { x = 400, y = 500 }
     self.speed = config.speed or 500
     self.angle = config.angle or 0
-    self.sprite = {
-        image = love.graphics.newImage(config.spritePath),
-        width = config.spriteWidth or love.graphics.newImage(config.spritePath):getWidth(),
-        height = config.spriteHeight or love.graphics.newImage(config.spritePath):getHeight(),
-        spriteScale = config.spriteScale or {x = 0.3, y = 0.4}
-    }
-    self.hitbox = {
-        x = self.position.x,
-        y = self.position.y,
-        radius = (self.sprite.width / 2) * self.sprite.spriteScale.x
-    }
+    self.sprite = self:setupSprite(config)
+    self.hitboxes = self:setupHitboxes()
     self.thrust = false
     self.xspeed = 0
     self.yspeed = 0
-    self.tail = {
+    self.tail = self:setupTail(config)
+    self.animation = self:setupAnimation(config)
+    return self
+end
+
+function Ship:setupSprite(config)
+    return {
+        image = love.graphics.newImage(config.spritePath),
+        width = config.spriteWidth or love.graphics.newImage(config.spritePath):getWidth(),
+        height = config.spriteHeight or love.graphics.newImage(config.spritePath):getHeight(),
+        spriteScale = config.spriteScale or { x = 0.3, y = 0.4 }
+    }
+end
+
+function Ship:setupHitboxes()
+    return {
+        {x = self.position.x, y = self.position.y, radius = (self.sprite.width / 2) * self.sprite.spriteScale.x}
+    }
+end
+
+function Ship:setupTail(config)
+    return {
         image = love.graphics.newImage(config.tailPath),
         width = config.tailWidth,
         height = config.tailHeight,
-        spriteScale = config.tailScale or {x = 0.6, y = 0.4}
+        spriteScale = config.tailScale or { x = 0.6, y = 0.4 }
     }
-    self.animation = {
+end
+
+function Ship:setupAnimation(config)
+    local animation = {
         frames = config.animationFrames or 2,
         currentFrame = 1,
         frameTime = config.frameTime or 0.08,
         elapsedTime = 0,
-        isPlaying = false
+        isPlaying = false,
+        quads = {}
     }
-    self.quads = {}
 
-    -- Create quads for ship animation frames
-    local spriteSheetWidth = self.sprite.width * self.animation.frames
-    for i = 1, self.animation.frames do
-        self.quads[i] = love.graphics.newQuad(
-            (i - 1) * self.sprite.width, 
-            0, 
-            self.sprite.width, 
-            self.sprite.height, 
-            spriteSheetWidth, 
+    local spriteSheetWidth = self.sprite.width * animation.frames
+    for i = 1, animation.frames do
+        animation.quads[i] = love.graphics.newQuad(
+            (i - 1) * self.sprite.width,
+            0,
+            self.sprite.width,
+            self.sprite.height,
+            spriteSheetWidth,
             self.sprite.height
         )
     end
 
-    return self
+    return animation
+end
+
+function Ship:findHitbox(OffsetX, OffsetY)
+    for i, hitbox in ipairs(self.hitboxes) do
+        hitbox.x = self.position.x + math.cos(self.angle - math.pi / 2) * OffsetY -
+            math.sin(self.angle - math.pi / 2) * OffsetX
+        hitbox.y = self.position.y + math.sin(self.angle - math.pi / 2) * OffsetY +
+            math.cos(self.angle - math.pi / 2) * OffsetX
+    end
 end
 
 function Ship:draw()
-    -- debug  
-    -- the hitbox of the ship
-    if false then        
-        local debugOffsetX = 0
-        local debugOffsetY = 10
-        self.hitbox.x = self.position.x -  math.sin(self.angle  - math.pi / 2) * debugOffsetX + math.cos(self.angle  - math.pi / 2) * debugOffsetY
-        self.hitbox.y = self.position.y +  math.cos(self.angle  - math.pi / 2) * debugOffsetX  + math.sin(self.angle  - math.pi / 2) * debugOffsetY
-        love.graphics.circle("line", self.hitbox.x,self.hitbox.y, self.hitbox.radius) 
+    self:drawShip()
+    self:drawTail()
+    if false then
+        self:drawHitboxes()
     end
-    -- Draw the ship
+end
+
+function Ship:drawShip()
     love.graphics.draw(
         self.sprite.image,
-        self.quads[self.animation.currentFrame], 
-        self.position.x, 
-        self.position.y, 
-        self.angle, 
+        self.animation.quads[self.animation.currentFrame],
+        self.position.x,
+        self.position.y,
+        self.angle,
         self.sprite.spriteScale.x, self.sprite.spriteScale.y,
-        self.sprite.width / 2, 
+        self.sprite.width / 2,
         self.sprite.height / 2
     )
-    local OffsetX = 25 -- Horizontal distance from center to cannons
-    local OffsetY = -43 -- Vertical distance from center to cannons
-    local X = self.position.x + math.cos(self.angle  - math.pi / 2) * OffsetY -  math.sin(self.angle  - math.pi / 2) * OffsetX
-    local Y = self.position.y + math.sin(self.angle  - math.pi / 2) * OffsetY +  math.cos(self.angle  - math.pi / 2) * OffsetX
-    -- Draw the tail if thrust is active
+end
+
+function Ship:drawTail()
     if self.thrust or self.tail.spriteScale.y > 0.3 then
+        local OffsetX = 25
+        local OffsetY = -43
+        local X = self.position.x + math.cos(self.angle - math.pi / 2) * OffsetY -
+            math.sin(self.angle - math.pi / 2) * OffsetX
+        local Y = self.position.y + math.sin(self.angle - math.pi / 2) * OffsetY +
+            math.cos(self.angle - math.pi / 2) * OffsetX
+        
         love.graphics.draw(
-            self.tail.image, 
-            X, 
-            Y, 
-            self.angle, 
-            self.tail.spriteScale.x, self.tail.spriteScale.y, 
-            self.tail.width / 2, 
+            self.tail.image,
+            X,
+            Y,
+            self.angle,
+            self.tail.spriteScale.x, self.tail.spriteScale.y,
+            self.tail.width / 2,
             self.tail.height / 2
         )
     end
+end
+
+function Ship:drawHitboxes()
+    for i, hitbox in ipairs(self.hitboxes) do
+        if hitbox.radius then
+            love.graphics.circle("line", hitbox.x, hitbox.y, hitbox.radius)
+        elseif hitbox.width and hitbox.height then
+            love.graphics.rectangle("line", hitbox.x, hitbox.y, hitbox.width, hitbox.height)
+        end
+    end
+end
+
+function Ship:applyFriction(dt, friction)
+    if not self.thrust then
+        self.xspeed = self.xspeed - self.xspeed * friction * dt
+        self.yspeed = self.yspeed - self.yspeed * friction * dt
+        
+        if self.tail.spriteScale.y > 0.3 then
+            self.tail.spriteScale.y = self.tail.spriteScale.y - 1 * dt
+        end
+    else
+        if self.tail.spriteScale.y < 0.8 then
+            self.tail.spriteScale.y = self.tail.spriteScale.y + 0.8 * dt
+        end
+    end
+end
+
+function Ship:limitSpeed(dt)
+    local maxSpeed = self.speed * dt
+    local length = math.sqrt(self.xspeed * self.xspeed + self.yspeed * self.yspeed)
+    if length > maxSpeed then
+        self.xspeed = self.xspeed * (maxSpeed / length)
+        self.yspeed = self.yspeed * (maxSpeed / length)
+    end
+end
+
+function Ship:updatePosition()
+    self.position.x = self.position.x + self.xspeed
+    self.position.y = self.position.y + self.yspeed
+end
+
+function Ship:constrainToScreen()
+    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local constrained = false
+
+    -- Store old position for checking
+    local oldX, oldY = self.position.x, self.position.y
+
+    for _, hitbox in ipairs(self.hitboxes) do
+        if hitbox.radius then
+            -- Handle circular hitbox
+            local radius = hitbox.radius
+
+            -- X-axis constraint
+            self.position.x = math.max(radius, math.min(self.position.x, screenWidth - radius))
+
+            -- Y-axis constraint
+            self.position.y = math.max(radius, math.min(self.position.y, screenHeight - radius))
+        
+        elseif hitbox.width and hitbox.height then
+            -- Handle rectangular hitbox
+            local halfWidth, halfHeight = hitbox.width / 2, hitbox.height / 2
+
+            -- X-axis constraint
+            self.position.x = math.max(halfWidth, math.min(self.position.x, screenWidth - halfWidth))
+
+            -- Y-axis constraint
+            self.position.y = math.max(halfHeight, math.min(self.position.y, screenHeight - halfHeight))
+        end
+    end
+
+    -- Check if the position has changed
+    constrained = (self.position.x ~= oldX or self.position.y ~= oldY)
+
+    return constrained
+end
+
+
+
+function Ship:collisions(hitboxes)
+    for _, hitbox in ipairs(hitboxes) do
+        for _, shipHitbox in ipairs(self.hitboxes) do
+            if shipHitbox.radius and hitbox.radius then
+                -- Circle vs Circle
+                local dx, dy = shipHitbox.x - hitbox.x, shipHitbox.y - hitbox.y
+                local distance = math.sqrt(dx * dx + dy * dy)
+                if distance < shipHitbox.radius + hitbox.radius then
+                    local overlap = shipHitbox.radius + hitbox.radius - distance
+                    self.position.x, self.position.y = self.position.x + (dx / distance) * overlap, self.position.y + (dy / distance) * overlap
+                    return true
+                end
+            elseif shipHitbox.width and hitbox.width then
+                -- Rectangle vs Rectangle
+                if shipHitbox.x < hitbox.x + hitbox.width and shipHitbox.x + shipHitbox.width > hitbox.x and
+                   shipHitbox.y < hitbox.y + hitbox.height and shipHitbox.y + shipHitbox.height > hitbox.y then
+                    local overlapX = math.min(shipHitbox.x + shipHitbox.width - hitbox.x, hitbox.x + hitbox.width - shipHitbox.x)
+                    local overlapY = math.min(shipHitbox.y + shipHitbox.height - hitbox.y, hitbox.y + hitbox.height - shipHitbox.y)
+                    if overlapX < overlapY then self.position.x = self.position.x + (shipHitbox.x < hitbox.x and -overlapX or overlapX)
+                    else self.position.y = self.position.y + (shipHitbox.y < hitbox.y and -overlapY or overlapY) end
+                    return true
+                end
+            else
+                -- Circle vs Rectangle
+                local cx, cy = shipHitbox.radius and shipHitbox.x or hitbox.x, shipHitbox.radius and shipHitbox.y or hitbox.y
+                local rect = shipHitbox.width and shipHitbox or hitbox
+                local closestX = math.max(rect.x, math.min(cx, rect.x + rect.width))
+                local closestY = math.max(rect.y, math.min(cy, rect.y + rect.height))
+                local dx, dy = cx - closestX, cy - closestY
+                if math.sqrt(dx * dx + dy * dy) < (shipHitbox.radius or hitbox.radius) then
+                    local overlap = (shipHitbox.radius or hitbox.radius) - math.sqrt(dx * dx + dy * dy)
+                    self.position.x, self.position.y = self.position.x + (dx / math.sqrt(dx * dx + dy * dy)) * overlap,
+                                                       self.position.y + (dy / math.sqrt(dx * dx + dy * dy)) * overlap
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+
+
+function Ship:updateAngle(dt)
+    local mouse_x, mouse_y = love.mouse.getPosition()
+    local targetAngle = math.atan2(mouse_y - self.position.y, mouse_x - self.position.x) + math.pi / 2
+    local angleDifference = (targetAngle - self.angle + math.pi) % (2 * math.pi) - math.pi
+    local maxRotationSpeed = math.pi * dt * 2
+    
+    if math.abs(angleDifference) > maxRotationSpeed then
+        angleDifference = maxRotationSpeed * (angleDifference < 0 and -1 or 1)
+    end
+    
+    self.angle = self.angle + angleDifference
 end
 
 return Ship

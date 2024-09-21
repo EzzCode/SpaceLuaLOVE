@@ -8,77 +8,49 @@ function Menu.new(game, player)
     self.game = game
     self.player = player
     
-    self.func = {
-        newGame = function()
-            self.game:startGame(self.player)
-        end,
-        quit = function()
-            love.event.quit()
-        end,
-        fullScreen = function()
-            love.window.setFullscreen(not love.window.getFullscreen())
-            -- Recalculate screen dimensions and scale factor
-            self.game:findScaleFactor()
-        end,
-        changeGameState = function(state)
-            self.game:changeGameState(state)
-        end
-    }
-    
     self.buttons = {
-        main = {
-            Button:new("Play Game", self.func.newGame, nil, 120, 40),
-            Button:new("Settings", self.func.fullScreen, nil, 120, 40),
-            Button:new("Exit Game", self.func.quit, nil, 120, 40)
-        },
-        over = {
-            Button:new("Play Again", self.func.newGame, nil, 120, 40),
-            Button:new("Menu", self.func.changeGameState, "menu", 120, 40),
-            Button:new("Exit Game", self.func.quit, nil, 120, 40)
-        }
+        main = self:createMainMenuButtons(),
+        over = self:createGameOverButtons()
     }
     
     return self
 end
 
-function Menu:draw(state)
-    -- local buttons = self.buttons[state]
-    -- for i, button in ipairs(buttons) do
-    --     button:draw(love.graphics.getWidth() / 2 - button.width / 2, 100 + (i - 1) * 60)
-    -- end
-    -- Get the current window dimensions
-    local windowWidth = love.graphics.getWidth()
-    local windowHeight = love.graphics.getHeight()
-
-    -- Calculate relative positions for buttons based on the window size
-    local playX = windowWidth * (400 / 800) - 60  -- Horizontal position
-    local playY = windowHeight * (300 / 600)      -- "Play" button Y position
-    local settingsY = windowHeight * (400 / 600)  -- "Settings" button Y position
-    local exitY = windowHeight * (500 / 600)      -- "Exit" button Y position
-
-    -- Select the button set based on the current state
-    local buttons
-    if state == "main" then
-        buttons = self.buttons.main
-    elseif state == "over" then
-        buttons = self.buttons.over
-    end
-
-    -- Draw buttons at relative positions
-    if buttons then
-        buttons[1]:draw(playX, playY)           -- "Play Game" or "Play Again"
-        buttons[2]:draw(playX, settingsY)       -- "Settings" or "Menu"
-        buttons[3]:draw(playX, exitY)           -- "Exit Game"
-    end
-    
+function Menu:createMainMenuButtons()
+    return {
+        Button:new("Play Game", function() self.game:startGame(self.player) end, nil, 120, 40),
+        Button:new("Settings", function() love.window.setFullscreen(not love.window.getFullscreen()) end, nil, 120, 40),
+        Button:new("Exit Game", love.event.quit, nil, 120, 40)
+    }
 end
 
-function Menu:update(dt)
-    -- Add any menu-specific update logic here if needed
+function Menu:createGameOverButtons()
+    return {
+        Button:new("Play Again", function() self.game:startGame(self.player) end, nil, 120, 40),
+        Button:new("Menu", function() self.game:changeGameState("menu") end, nil, 120, 40),
+        Button:new("Exit Game", love.event.quit, nil, 120, 40)
+    }
+end
+
+function Menu:draw(state)
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    local buttonX = windowWidth * 0.5 - 60
+    local buttonY = {
+        windowHeight * 0.5,
+        windowHeight * 0.6667,
+        windowHeight * 0.8333
+    }
+
+    local buttons = self.buttons[state]
+    if buttons then
+        for i, button in ipairs(buttons) do
+            button:draw(buttonX, buttonY[i])
+        end
+    end
 end
 
 function Menu:mousepressed(x, y, button)
-    if button == 1 then  -- Left mouse button
+    if button == 1 then
         local currentState = self.game.state.menu and "main" or (self.game.state.over and "over" or nil)
         if currentState then
             for _, btn in ipairs(self.buttons[currentState]) do
@@ -87,7 +59,5 @@ function Menu:mousepressed(x, y, button)
         end
     end
 end
-
-
 
 return Menu
