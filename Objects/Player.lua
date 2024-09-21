@@ -21,7 +21,7 @@ function Player.new()
     })
     self.bullets = Bullet.new({
         speed = 1000,
-        spritePath = 'Assets/OrangeSpin__000.png'
+        spritePath = 'Assets/RedSpin__000.png'
     })
     return self
 end
