@@ -10,7 +10,11 @@ function Game()
             running = false,
             over = false
         },
-        background = Background.new(),
+        background = Background.new({
+            {image = "Assets/Space Background (1).png", speed = 50},  -- Farther, slower
+            {image = "Assets/Space Background (2).png", speed = 75}, -- Middle layer
+            {image = "Assets/Space Background (3).png", speed = 100}  -- Closer, faster
+        }),
 
         changeGameState = function(self, state)
             for k in pairs(self.state) do
@@ -21,14 +25,18 @@ function Game()
         startGame = function(self, Player)
             self:changeGameState("running")
             self.lives = 3
-            Player.ship.position.x = 0 + Player.ship.hitboxes[1].radius
+            Player.ship.position.x = 10 + Player.ship.hitboxes[1].radius
             Player.ship.position.y = love.graphics.getHeight() / 2
             self.enemies = {}
         end,
 
         update = function(self, dt)
             if self.state.running then
-                self.background:update(dt)
+                self.background:update(dt, 1, 0, false)
+            elseif self.state.menu then
+                self.background:update(dt, 0.5, 0.2 , false)
+            elseif self.state.paused then
+                self.background:update(dt, 1, 1, true)
             end
         end,
 

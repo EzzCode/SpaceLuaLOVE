@@ -1,3 +1,5 @@
+local Sprite = require 'Components.Sprite'
+
 local Ship = {}
 Ship.__index = Ship
 --[[
@@ -27,28 +29,20 @@ function Ship.new(config)
     self.position = config.position or { x = 400, y = 500 }
     self.speed = config.speed or 500
     self.angle = config.angle or 0
-    self.sprite = self:setupSprite(config)
+    self.shipSprite = Sprite.new(config)
     self.hitboxes = self:setupHitboxes()
     self.thrust = false
     self.xspeed = 0
     self.yspeed = 0
     self.tail = self:setupTail(config)
-    self.animation = self:setupAnimation(config)
     return self
 end
 
-function Ship:setupSprite(config)
-    return {
-        image = love.graphics.newImage(config.spritePath),
-        width = config.spriteWidth or love.graphics.newImage(config.spritePath):getWidth(),
-        height = config.spriteHeight or love.graphics.newImage(config.spritePath):getHeight(),
-        spriteScale = config.spriteScale or { x = 0.3, y = 0.4 }
-    }
-end
+
 
 function Ship:setupHitboxes()
     return {
-        {x = self.position.x, y = self.position.y, radius = (self.sprite.width / 2) * self.sprite.spriteScale.x}
+        {x = self.position.x, y = self.position.y, radius = (self.shipSprite.sprite.width / 2) * self.shipSprite.sprite.spriteScale.x}
     }
 end
 
@@ -61,30 +55,7 @@ function Ship:setupTail(config)
     }
 end
 
-function Ship:setupAnimation(config)
-    local animation = {
-        frames = config.animationFrames or 2,
-        currentFrame = 1,
-        frameTime = config.frameTime or 0.08,
-        elapsedTime = 0,
-        isPlaying = false,
-        quads = {}
-    }
 
-    local spriteSheetWidth = self.sprite.width * animation.frames
-    for i = 1, animation.frames do
-        animation.quads[i] = love.graphics.newQuad(
-            (i - 1) * self.sprite.width,
-            0,
-            self.sprite.width,
-            self.sprite.height,
-            spriteSheetWidth,
-            self.sprite.height
-        )
-    end
-
-    return animation
-end
 
 function Ship:findHitbox(OffsetX, OffsetY)
     for i, hitbox in ipairs(self.hitboxes) do
@@ -98,22 +69,16 @@ end
 function Ship:draw()
     self:drawShip()
     self:drawTail()
-    if false then
+    if Debugging then
         self:drawHitboxes()
     end
 end
 
 function Ship:drawShip()
-    love.graphics.draw(
-        self.sprite.image,
-        self.animation.quads[self.animation.currentFrame],
-        self.position.x,
-        self.position.y,
-        self.angle,
-        self.sprite.spriteScale.x, self.sprite.spriteScale.y,
-        self.sprite.width / 2,
-        self.sprite.height / 2
-    )
+    self.shipSprite.x = self.position.x
+    self.shipSprite.y = self.position.y
+    self.shipSprite.angle = self.angle
+    self.shipSprite:draw()
 end
 
 function Ship:drawTail()
@@ -270,4 +235,9 @@ function Ship:updateAngle(dt)
     self.angle = self.angle + angleDifference
 end
 
+
+
+function Ship:update(dt)
+    self.shipSprite:updateAnimation(dt)
+end
 return Ship

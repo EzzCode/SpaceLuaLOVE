@@ -1,40 +1,79 @@
 local Background = {}
 Background.__index = Background
 
-function Background.new()
+-- Create a new Background with multiple layers
+function Background.new(layers)
     local self = setmetatable({}, Background)
-    self.x = 0
-    self.y = 0
-    self.speed = 100
-    self.image = love.graphics.newImage("Assets/Space Background1.png")
-    self.width = 3000
-    self.height = 1000
-    self.scrollSpeed = 100
-    self.scaleFactor = 1
+    self.layers = {}
+
+    -- Initialize each layer with its own image, speed, and scale factor
+    for i, layer in ipairs(layers) do
+        local layerData = {
+            image = love.graphics.newImage(layer.image),
+            speed = layer.speed,
+            scaleFactor = 1,
+            x = 0,
+            y = 0,
+            width = love.graphics.newImage(layer.image):getWidth(),
+            height = love.graphics.newImage(layer.image):getHeight(),
+        }
+        -- Scale the background based on screen size
+        layerData.scaleFactor = love.graphics.getHeight() / layerData.height
+        table.insert(self.layers, layerData)
+    end
+    self:updateScaleFactor()
+    
     return self
 end
 
-function Background:update(dt)
-    self.x = (self.x + self.scrollSpeed * dt) % self.width
-end
-
-function Background:draw()
-    local tilesX = math.ceil(love.graphics.getWidth() / (self.width * self.scaleFactor)) + 1
-    local tilesY = math.ceil(love.graphics.getHeight() / (self.height * self.scaleFactor)) + 1
-
-    for x = 0, tilesX - 1 do
-        for y = 0, tilesY - 1 do
-            love.graphics.draw(self.image,
-                x * self.width * self.scaleFactor - self.x,
-                y * self.height * self.scaleFactor - self.y, 0,
-                self.scaleFactor, self.scaleFactor)
+-- Update background position for each layer based on direction and speed
+function Background:update(dt, directionX, directionY, isPaused)
+    if not isPaused then
+        for _, layer in ipairs(self.layers) do
+            -- Update horizontal and vertical positions based on speed and direction
+            layer.x = (layer.x + directionX * layer.speed * dt) % (layer.width * layer.scaleFactor)
+            layer.y = (layer.y + directionY * layer.speed * dt) % (layer.height * layer.scaleFactor)
         end
     end
 end
 
+-- Draw each layer of the background, repeating it to fill the screen
+function Background:draw()
+    for _, layer in ipairs(self.layers) do
+        local tilesX = math.ceil(love.graphics.getWidth() / (layer.width * layer.scaleFactor)) + 1
+        local tilesY = math.ceil(love.graphics.getHeight() / (layer.height * layer.scaleFactor)) + 1
+        for x = 0, tilesX - 1 do
+            for y = 0, tilesY - 1 do
+                love.graphics.draw(
+                    layer.image,
+                    x * layer.width * layer.scaleFactor - layer.x,
+                    y * layer.height * layer.scaleFactor - layer.y,
+                    0,
+                    layer.scaleFactor,
+                    layer.scaleFactor
+                )
+            end
+        end
+    end
+end
+
+-- Dynamically change the scroll speed for all layers
+function Background:setScrollSpeed(speed)
+    for _, layer in ipairs(self.layers) do
+        layer.speed = speed
+    end
+end
+
+-- Update scale factor based on screen height
 function Background:updateScaleFactor()
-    local screenHeight = love.graphics.getHeight()
-    self.scaleFactor = screenHeight < self.height and screenHeight / self.height or 1
+    for _, layer in ipairs(self.layers) do
+        layer.scaleFactor = love.graphics.getHeight() / layer.height
+    end
+end
+
+-- Pause or resume scrolling
+function Background:togglePause(pauseState)
+    self.isPaused = pauseState
 end
 
 return Background

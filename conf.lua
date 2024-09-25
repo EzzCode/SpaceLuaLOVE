@@ -1,5 +1,5 @@
 function love.conf(t)
-    t.window.title = "Asteroids"
+    t.window.title = "Ezz can't think of a title"
     -- t.identity = "data/saves"
     -- t.window.icon = "assets/icon.png"
     t.window.resizable = false

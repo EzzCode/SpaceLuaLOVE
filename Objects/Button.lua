@@ -2,17 +2,17 @@ local Button = {}
 Button.__index = Button
 
 function Button:new(text, func, funcArgs, width, height)
-    local instance = setmetatable({}, Button)
+    local self = setmetatable({}, Button)
     
-    instance.text = text or "Button"
-    instance.func = func or function() end
-    instance.funcArgs = funcArgs
-    instance.width = width or 100
-    instance.height = height or 50
-    instance.x = 0
-    instance.y = 0
+    self.text = text or "Button"
+    self.func = func or function() end
+    self.funcArgs = funcArgs
+    self.width = width or 100
+    self.height = height or 50
+    self.x = 0
+    self.y = 0
 
-    return instance
+    return self
 end
 
 function Button:checkPressed(mouseX, mouseY)

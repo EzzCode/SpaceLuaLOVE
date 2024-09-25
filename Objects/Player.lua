@@ -9,19 +9,21 @@ function Player.new()
     local self = setmetatable({}, Player)
     self.ship = Ship.new({
         position = { x = 400, y = 500 },
-        speed = 700,
-        spritePath = 'Assets/Ship (7) (1).png',
+        speed = 500,
+        spritePath = 'Assets/Ship (7) (1)greenS.png',
         spriteWidth = 383,
         spriteHeight = 331,
-        tailPath = 'Assets/BlueTail__000.png',
+        tailPath = 'Assets/GreenSTail__000.png',
         tailWidth = 115,
         tailHeight = 33,
         animationFrames = 2,
-        frameTime = 0.08
+        frameTime = 0.08,
+        isPlaying = true,
+        spriteScale = { x = 0.3, y = 0.3 },
     })
     self.bullets = Bullet.new({
         speed = 1000,
-        spritePath = 'Assets/RedSpin__000.png'
+        spritePath = 'Assets/GreenSSpin__000.png'
     })
     return self
 end
