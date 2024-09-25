@@ -27,11 +27,14 @@ end
 
 function Sprite:setupSprite(config)
     local image = love.graphics.newImage(config.spritePath)
+    local  spriteScale = config.spriteScale or { x = 1, y = 1}
+    spriteScale.x = spriteScale.x * GlobalScale.x
+    spriteScale.y = spriteScale.y * GlobalScale.y
     return {
         image = image,
         width = config.spriteWidth or image:getWidth(),
         height = config.spriteHeight or image:getHeight(),
-        spriteScale = config.spriteScale or { x = 1, y = 1}
+        spriteScale = spriteScale
     }
 end
 
@@ -86,7 +89,7 @@ function Sprite:draw()
             self.x,
             self.y,
             self.angle,
-            self.sprite.spriteScale.x, self.sprite.spriteScale.y,
+            self.sprite.spriteScale.x , self.sprite.spriteScale.y ,
             self.sprite.width / 2,
             self.sprite.height / 2
         )

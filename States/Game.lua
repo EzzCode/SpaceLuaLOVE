@@ -22,11 +22,13 @@ function Game()
             end
         end,
 
-        startGame = function(self, Player)
+        startGame = function(self, Player, Enemy)
             self:changeGameState("running")
+            Enemy:init()
             self.lives = 3
+            Player:initShip()
             Player.ship.position.x = 10 + Player.ship.hitboxes[1].radius
-            Player.ship.position.y = love.graphics.getHeight() / 2
+            Player.ship.position.y = WindowHeight / 2
             self.enemies = {}
         end,
 
@@ -42,6 +44,11 @@ function Game()
 
         draw = function(self)
             self.background:draw()
+        end,
+
+        fullscreenToggle = function()
+            love.window.setFullscreen(not love.window.getFullscreen())
+            CalculateGlobals ()
         end
     }
 

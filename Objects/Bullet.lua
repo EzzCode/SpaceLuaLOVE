@@ -19,7 +19,7 @@ function Bullet:draw()
             self.sprite.image,
             bullet.x, bullet.y,
             bullet.angle,
-            self.sprite.scale, self.sprite.scale,
+            self.sprite.scale * GlobalScale.x, self.sprite.scale * GlobalScale.y,
             self.sprite.image:getWidth() / 2,
             self.sprite.image:getHeight() / 2
         )
@@ -36,8 +36,8 @@ end
 function Bullet:updateBullets(dt)
     for i = #self.list, 1, -1 do
         local bullet = self.list[i]
-        bullet.x = bullet.x + math.cos(bullet.angle) * self.speed * dt
-        bullet.y = bullet.y + math.sin(bullet.angle) * self.speed * dt
+        bullet.x = bullet.x + math.cos(bullet.angle) * self.speed * dt * GlobalScale.x
+        bullet.y = bullet.y + math.sin(bullet.angle) * self.speed * dt * GlobalScale.y
         
         if self:isOffScreen(bullet) then
             table.remove(self.list, i)
@@ -46,8 +46,8 @@ function Bullet:updateBullets(dt)
 end
 
 function Bullet:isOffScreen(bullet)
-    return bullet.x < 0 or bullet.x > love.graphics.getWidth() or 
-           bullet.y < 0 or bullet.y > love.graphics.getHeight()
+    return bullet.x < 0 or bullet.x > WindowWidth or 
+           bullet.y < 0 or bullet.y > WindowHeight
 end
 
 function Bullet:fire(OffsetX, OffsetY, angle, x, y, number)
@@ -61,8 +61,8 @@ function Bullet:fire(OffsetX, OffsetY, angle, x, y, number)
             x = cannonX,
             y = cannonY,
             angle = angle,
-            radiusX = self.sprite.image:getWidth() * self.sprite.scale / 3 + 5,  -- Major axis
-            radiusY = self.sprite.image:getHeight() * self.sprite.scale / 3 - 5  -- Minor axis
+            radiusX = self.sprite.image:getWidth() * self.sprite.scale * GlobalScale.x/ 3 + 5* GlobalScale.x,  -- Major axis
+            radiusY = self.sprite.image:getHeight() * self.sprite.scale * GlobalScale.y / 3 - 5* GlobalScale.y  -- Minor axis
         }
 
         table.insert(self.list, bullet)
@@ -85,6 +85,9 @@ function Bullet:collision(objects)
             else  -- It's a general hitbox
                 if self:checkCollision(bullet, obj) then
                     table.remove(self.list, i)  -- Remove bullet
+                    if obj.radiusX and obj.radiusY then
+                        table.remove(objects, j) 
+                    end
                     hits = hits + 1
                     break  -- Stop checking more objects for this bullet
                 end
@@ -126,9 +129,30 @@ function Bullet:checkCollision(bullet, hitbox)
         -- Check if the rotated point is inside the ellipse
         return (rotatedDx * rotatedDx) / (bullet.radiusX * bullet.radiusX) + 
                (rotatedDy * rotatedDy) / (bullet.radiusY * bullet.radiusY) <= 1
+
+    elseif hitbox.radiusX and hitbox.radiusY then  -- Ellipse hitbox (ellipse-to-ellipse collision)
+        -- Step 1: Calculate the distance between the two ellipse centers
+        local dx, dy = bullet.x - hitbox.x, bullet.y - hitbox.y
+        local distance = math.sqrt(dx * dx + dy * dy)
+
+        -- Step 2: Find the angle of the line connecting the centers
+        local angle = math.atan2(dy, dx)
+
+        -- Step 3: Calculate the effective radius of each ellipse along the connecting vector
+        local bulletRadiusAtAngle = (bullet.radiusX * bullet.radiusY) /
+            math.sqrt((bullet.radiusY * math.cos(angle - bullet.angle))^2 + 
+                      (bullet.radiusX * math.sin(angle - bullet.angle))^2)
+
+        local hitboxRadiusAtAngle = (hitbox.radiusX * hitbox.radiusY) /
+            math.sqrt((hitbox.radiusY * math.cos(angle - hitbox.angle))^2 + 
+                      (hitbox.radiusX * math.sin(angle - hitbox.angle))^2)
+
+        -- Step 4: Check if the distance between the two centers is less than the sum of the radii
+        return distance < (bulletRadiusAtAngle + hitboxRadiusAtAngle)
     end
 
     return false  -- No collision detected
 end
+
 
 return Bullet

@@ -3,10 +3,11 @@ local Button = require 'Objects.Button'
 local Menu = {}
 Menu.__index = Menu
 
-function Menu.new(game, player)
+function Menu.new(game, player, enemy)
     local self = setmetatable({}, Menu)
     self.game = game
     self.player = player
+    self.enemy = enemy
     
     self.buttons = {
         main = self:createMainMenuButtons(),
@@ -18,27 +19,26 @@ end
 
 function Menu:createMainMenuButtons()
     return {
-        Button:new("Play Game", function() self.game:startGame(self.player) end, nil, 120, 40),
-        Button:new("Settings", function() love.window.setFullscreen(not love.window.getFullscreen()) end, nil, 120, 40),
+        Button:new("Play Game", function() self.game:startGame(self.player, self.enemy) end, nil, 120, 40),
+        Button:new("FullScreen", function() self.game:fullscreenToggle() end, nil, 120, 40),
         Button:new("Exit Game", love.event.quit, nil, 120, 40)
     }
 end
 
 function Menu:createGameOverButtons()
     return {
-        Button:new("Play Again", function() self.game:startGame(self.player) end, nil, 120, 40),
+        Button:new("Play Again", function() self.game:startGame(self.player, self.enemy) end, nil, 120, 40),
         Button:new("Menu", function() self.game:changeGameState("menu") end, nil, 120, 40),
         Button:new("Exit Game", love.event.quit, nil, 120, 40)
     }
 end
 
 function Menu:draw(state)
-    local windowWidth, windowHeight = love.graphics.getDimensions()
-    local buttonX = windowWidth * 0.5 - 60
+    local buttonX = WindowWidth * 0.5 - 60
     local buttonY = {
-        windowHeight * 0.5,
-        windowHeight * 0.6667,
-        windowHeight * 0.8333
+        WindowHeight * 0.5,
+        WindowHeight * 0.6667,
+        WindowHeight * 0.8333
     }
 
     local buttons = self.buttons[state]

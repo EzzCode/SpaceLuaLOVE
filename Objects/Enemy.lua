@@ -25,7 +25,7 @@ function Enemy:init()
     self.explosionTimer = 0
     self.warningDuration = 4
     self.warningScrollX = 0
-
+    
     self:initShip()
     self:initCannons()
     self:initBullets()
@@ -35,12 +35,12 @@ end
 
 function Enemy:initShip()
     self.ship = Ship.new({
-        position = { x = love.graphics.getWidth() - 100, y = love.graphics.getHeight() / 2 },
-        speed = 20,
+        position = { x = WindowWidth - 100 * GlobalScale.x, y = WindowHeight / 2 },
+        speed = 20 * GlobalScale.y,
         angle = -math.pi / 2,
         spritePath = 'Assets/Ship (18)-1 (1).png',
         spriteWidth = 1109,
-        spriteScale = { x = 0.5, y = 0.5 },
+        spriteScale = { x = 0.5 , y = 0.5 },
         tailPath = 'Assets/BlueTail__000.png',
         tailScale = { x = 0, y = 0 },
         tailWidth = 115,
@@ -49,57 +49,52 @@ function Enemy:initShip()
         frameTime = 0.08,
         isPlaying = true
     })
-    self.ship.position.x = love.graphics.getWidth() -
-        (self.ship.shipSprite.sprite.height * self.ship.shipSprite.sprite.spriteScale.x / 2) - 20
+    self.ship.position.x = WindowWidth -
+        (self.ship.shipSprite.sprite.height * self.ship.shipSprite.sprite.spriteScale.x / 2) - 20 * GlobalScale.x
     self:setupHitboxes()
 end
 
 function Enemy:setupHitboxes()
     self.ship.hitboxes = {
         {
-            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale
-                .x,
+            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 4 * self.ship.shipSprite.sprite.spriteScale.y,
-            width = 440,
-            height = 110
+            width = 440 * GlobalScale.x,
+            height = 110 * GlobalScale.y
         },
         {
-            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale
-                .x,
+            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 4 * self.ship.shipSprite.sprite.spriteScale.y +
-                155,
-            width = 440,
-            height = 110
+                155 * GlobalScale.y,
+            width = 440 * GlobalScale.x,
+            height = 110 * GlobalScale.y
         },
         {
-            x = self.ship.position.x - 25,
+            x = self.ship.position.x - 25 * GlobalScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y +
-                100,
-            width = 220,
-            height = 355
+                100 * GlobalScale.y,
+            width = 220 * GlobalScale.x,
+            height = 355 * GlobalScale.y
         },
         {
-            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale
-                .x - 25,
+            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale.x - 25 * GlobalScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y +
-                50,
-            width = 50,
-            height = 455
+                50 * GlobalScale.y,
+            width = 50 * GlobalScale.x,
+            height = 455 * GlobalScale.y
         },
         {
-            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale
-                .x +
-                25,
+            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale.x +
+                25 * GlobalScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y,
-            width = 55,
-            height = 555
+            width = 55 * GlobalScale.x,
+            height = 555 * GlobalScale.y
         },
         {
-            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale
-                .x,
-            y = self.ship.position.y - 25,
-            width = 225,
-            height = 40
+            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale.x,
+            y = self.ship.position.y - 25 * GlobalScale.y,
+            width = 225 * GlobalScale.x,
+            height = 40 * GlobalScale.y
         }
     }
 end
@@ -109,7 +104,7 @@ function Enemy:initCannons()
         list = {},
         sprite = {
             image = love.graphics.newImage('Assets/Orange (46).png'),
-            spriteScale = { x = 0.6, y = 0.6 },
+            spriteScale = { x = 0.6 * GlobalScale.x, y = 0.6 * GlobalScale.y },
             height = 104,
             width = 202,
             angle = 0,
@@ -119,8 +114,8 @@ function Enemy:initCannons()
     for i = 1, 2 do
         local sign = (i == 1) and 1 or -1
         table.insert(self.cannons.list, {
-            x = self.ship.position.x - 100,
-            y = self.ship.position.y + sign * 82,
+            x = self.ship.position.x - 100 * GlobalScale.x,
+            y = self.ship.position.y + sign * 82 * GlobalScale.y,
             angle = -math.pi / 2,
         })
     end
@@ -133,9 +128,9 @@ function Enemy:initBullets()
             spritePath = 'Assets/BlueSpin__000.png'
         }),
         type2 = Bullet.new({
-            speed = 500,
+            speed = 500 ,
             spritePath = 'Assets/BlueBlast__001.png',
-            scale = 0.6
+            scale = 0.6 * math.min(GlobalScale.x, GlobalScale.y)
         })
     }
 end
@@ -147,7 +142,7 @@ function Enemy:initExplosions()
                 spritePath = 'Assets/spritesheet.png',
                 animationFrames = 11,
                 frameTime = 0.08,
-                spriteScale = { x = 1.5, y = 1.5 },
+                spriteScale = { x = 1.5 , y = 1.5 },
                 playOnce = true
             }
         ),
@@ -159,7 +154,7 @@ function Enemy:initExplosions()
                 spritePath = 'Assets/spritesheet.png',
                 animationFrames = 11,
                 frameTime = 0.08,
-                spriteScale = { x = 0.6, y = 0.6 },
+                spriteScale = { x = 0.6 , y = 0.6  },
                 playOnce = true
             }
         )
@@ -170,16 +165,17 @@ end
 function Enemy:initLaser()
     self.laser = {
         list = {},
-        spawnWarning = false,                 -- Indicates if the warning should be shown
-        warningTimer = self.warningDuration, -- Set the warning timer
+        spawnWarning = false,
+        warningTimer = self.warningDuration,
+        hitboxes = {}
     }
-    local OffsetX, OffsetY = -1000, 152
+    local OffsetX, OffsetY = -1000 , 152 
     for i = 1, 2 do
         local sign = (i == 1) and 1 or -1
         table.insert(self.laser.list, Sprite.new(
             {
-                x = self.ship.position.x + OffsetX,
-                y = self.ship.position.y + sign * OffsetY,
+                x = (self.ship.position.x + OffsetX) * GlobalScale.x,
+                y = (self.ship.position.y + sign * OffsetY) * GlobalScale.y,
                 spritePath = 'Assets/3.png',
                 spriteScale = { x = 1, y = 2 },
                 animationFrames = 8,
@@ -188,34 +184,29 @@ function Enemy:initLaser()
             }
         ))
     end
-    self.laser.list[1].sprite.spriteScale.x = -(love.graphics.getWidth() / self.laser.list[1].sprite.width) + 4
+    self.laser.list[1].sprite.spriteScale.x = -(WindowWidth / self.laser.list[1].sprite.width) + 4 * GlobalScale.x
     self.laser.list[2].sprite.spriteScale.x = self.laser.list[1].sprite.spriteScale.x
 end
 
 function Enemy:drawWarning(x, y, width, height)
-    -- Draw the red rectangle for warning
+    self.laser.hitboxes = {}
     love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.setLineWidth(3)
+    love.graphics.setLineWidth(3 * math.min(GlobalScale.x, GlobalScale.y))
     love.graphics.rectangle('line', x - width / 2, y - height / 4, width, height / 3, 10, 10)
     love.graphics.setLineWidth(1)
 
-    -- Text setup
     local warningText = "---Danger---     "
     local textWidth = love.graphics.getFont():getWidth(warningText)
     self.warningScrollX = self.warningScrollX % textWidth
 
-    -- Calculate start position for scrolling text
     local startX = x - width / 2 - self.warningScrollX
 
-    -- Draw infinitely scrolling text from right to left
     love.graphics.setColor(1, 0, 0, 1)
 
-    -- Draw the text multiple times to ensure wrapping
     for i = -1, math.floor(width / textWidth) do
         love.graphics.printf(warningText, startX + i * textWidth, y - height / 5, textWidth, "left")
     end
 
-    -- Reset to default color
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -224,12 +215,14 @@ function Enemy:updateLasers(dt)
         if self.laser.spawnWarning then
             self.laser.warningTimer = self.laser.warningTimer - dt
             
-            -- Update the warning scroll position (move right)
-            self.warningScrollX = (self.warningScrollX + 50 * dt)
+            self.warningScrollX = (self.warningScrollX + 50 * GlobalScale.x * dt)
             
             if self.laser.warningTimer <= 0 then
                 self.laser.spawnWarning = false
                 self.laser.warningTimer = self.warningDuration
+                for _, laser in ipairs(self.laser.list) do
+                    laser.animation.isPlaying = true
+                end
             end
         else
             laser:updateAnimation(dt)
@@ -239,22 +232,37 @@ end
 
 function Enemy:drawLasers()
     for _, laser in ipairs(self.laser.list) do
+        local width = -(laser.sprite.width * laser.sprite.spriteScale.x)
+        local height = laser.sprite.height
         if self.laser.spawnWarning then
-            self:drawWarning(laser.x, laser.y, -(laser.sprite.width * laser.sprite.spriteScale.x), laser.sprite.height)
+            self:drawWarning(laser.x, laser.y, width, height)
         else
             laser:draw()
+            if laser.animation.isPlaying then
+                table.insert(self.laser.hitboxes, {
+                    x = laser.x - width / 2,
+                    y = laser.y - height / 4,
+                    width = width,
+                    height = height/4
+                })
+            else 
+                self.laser.hitboxes = {}
+            end
         end
     end
+    for _, hitbox in ipairs(self.laser.hitboxes) do
+        love.graphics.rectangle('line', hitbox.x, hitbox.y, hitbox.width, hitbox.height)
+    end
 end
+
 function Enemy:fireLasers()
-    local OffsetX, OffsetY = -30, 152
+    local OffsetX, OffsetY = -30 * GlobalScale.x, 152 * GlobalScale.y
     self.laser.spawnWarning = true
     for i, laser in ipairs(self.laser.list) do
         local sign = (i == 1) and 1 or -1
         laser.x = (self.ship.position.x + OffsetX) + (laser.sprite.width * laser.sprite.spriteScale.x) / 2
         laser.y = self.ship.position.y + OffsetY * sign
         laser.animation.currentFrame = 1
-        laser.animation.isPlaying = true
         laser.animation.playOnce = true
     end
 end
@@ -279,11 +287,11 @@ end
 function Enemy:drawHealthBar()
     local r, g, b, a = love.graphics.getColor()
     love.graphics.setColor(1, 0, 0, a)
-    love.graphics.rectangle('fill', love.graphics.getWidth() - 27,
-        self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y, 10,
-        self.life / 100 * 555)
+    love.graphics.rectangle('fill', WindowWidth - 27 * GlobalScale.x,
+        self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y, 10 * GlobalScale.x,
+        self.life / 100 * 555 * GlobalScale.y)
     love.graphics.setColor(1, 1, 1, a)
-    love.graphics.print('Health', love.graphics.getWidth(),
+    love.graphics.print('Health', WindowWidth,
         self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y,
         math.pi / 2)
 end
@@ -359,8 +367,8 @@ end
 
 function Enemy:fireBullets(type)
     local bulletConfig = {
-        type1 = { offsetX = 15, offsetY = 100, angle = -math.pi / 2, count = 2 },
-        type2 = { offsetX = 20, offsetY = 150, angle = -math.pi, count = 1 }
+        type1 = { offsetX = 15 * GlobalScale.x, offsetY = 100 * GlobalScale.y, angle = -math.pi / 2, count = 2 },
+        type2 = { offsetX = 20 * GlobalScale.x, offsetY = 150 * GlobalScale.y, angle = -math.pi, count = 1 }
     }
     local config = bulletConfig[type]
     for _, cannon in ipairs(self.cannons.list) do
@@ -376,7 +384,7 @@ function Enemy:triggerExplosions()
     for i, cannon in ipairs(self.cannons.list) do
         table.insert(self.explosionQueue, { type = "cannon", index = i, x = cannon.x, y = cannon.y })
     end
-    table.insert(self.explosionQueue, { type = "ship", x = self.ship.position.x + 100, y = self.ship.position.y - 50 })
+    table.insert(self.explosionQueue, { type = "ship", x = self.ship.position.x + 100 * GlobalScale.x, y = self.ship.position.y - 50 * GlobalScale.y })
 end
 
 function Enemy:updateExplosions(dt)

@@ -1,10 +1,10 @@
+require "globals"
 local Player = require('Objects.Player')
 local Game = require('States.Game')
 local Menu = require('States.Menu')
 local Enemy = require('Objects.Enemy')
 local Sprite= require('Components.Sprite')
 local Asteroid = require('Objects.Asteroid')
-Debugging = false
 -- Variables for firing control
 local fireRate = 0.25 -- Time in seconds between each bullet
 local timeSinceLastShot = 0 -- Timer to track time between shots
@@ -38,11 +38,11 @@ function love.keypressed(key)
 end
 
 function love.load()
-    -- Set up the screen dimensions
+    CalculateGlobals()
     game = Game()
     player = Player:new()
     enemy = Enemy:new()
-    menu = Menu.new(game, player)
+    menu = Menu.new(game, player, enemy)
     asteroid = Asteroid.new()
     explosion = Sprite.new(
         {
@@ -54,10 +54,7 @@ function love.load()
     )
     explosion.animation.isPlaying = false
     explosion.animation.playOnce = true
-    asteroid:spawn()
-    asteroid:spawn()
-    asteroid:spawn()
-    asteroid:spawn()
+
 end
 
 function love.update(dt)
@@ -72,13 +69,13 @@ function love.update(dt)
                 player:fireBullets()  -- Fire bullets
                 timeSinceLastShot = 0 -- Reset the timer
             end
-            if player.ship:collisions(enemy.ship.hitboxes) then
+            if player.ship:collisions(enemy.ship.hitboxes) or player.ship:collisions(enemy.laser.hitboxes)then
                 if not Debugging then game.lives = game.lives - 1 end
                 explosion.x = player.ship.position.x
                 explosion.y = player.ship.position.y
                 explosion.animation.isPlaying = true
                 player.ship.position.x = 0 + player.ship.hitboxes[1].radius 
-                player.ship.position.y = love.graphics.getHeight() / 2
+                player.ship.position.y = WindowHeight / 2
                 player.ship.angle = 0
             end
             player:move(dt)
@@ -112,6 +109,7 @@ function love.update(dt)
         end
         hits = player.bullets:collision(enemy.ship.hitboxes)
         player.bullets:collision(asteroid.list)
+        player.bullets:collision(enemy.bullets.type2.list)
         if hits > 0 and enemy.life > 0 then
             enemy.life = enemy.life - hits
         end
@@ -119,7 +117,6 @@ function love.update(dt)
         explosion:updateAnimation(dt)
         enemy:update(dt, player)
     elseif game.state["menu"] then
-        asteroid:update(dt)
     end
 end
 
@@ -155,7 +152,7 @@ function love.draw()
         asteroid:draw()
         love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 10)
         love.graphics.setFont(love.graphics.newFont(55))
-        love.graphics.printf("Ezz can't think of a title", 0, love.graphics.getHeight() / 4, love.graphics.getWidth(), "center")
+        love.graphics.printf("Ezz can't think of a title", 0, WindowHeight / 4, WindowWidth, "center")
         love.graphics.setFont(love.graphics.newFont(12))
     elseif game.state["over"] then -- if we're at the game over screen, draw the buttons
         love.graphics.print('Game Over', 10, 10)
@@ -172,9 +169,9 @@ function love.draw()
             -- Draw bullets
             love.graphics.setColor(r, g, b, 1)
             love.graphics.setFont(love.graphics.newFont(30))
-            love.graphics.printf('Paused', 0, love.graphics.getHeight() / 2 - 50, love.graphics.getWidth(), 'center')
+            love.graphics.printf('Paused', 0, WindowHeight / 2 - 50, WindowWidth, 'center')
             love.graphics.setFont(love.graphics.newFont(15))
-            love.graphics.printf('Press ESC to resume', 0, love.graphics.getHeight() / 2 + 50, love.graphics.getWidth(), 'center')
+            love.graphics.printf('Press ESC to resume', 0, WindowHeight / 2 + 50, WindowWidth, 'center')
             love.graphics.setFont(love.graphics.newFont(12))
         else
             -- Draw explosion if no lives left
@@ -186,7 +183,7 @@ function love.draw()
                 enemy:draw()
                 explosion:draw()
                 love.graphics.setColor(r, g, b, 1)
-                love.graphics.print('Paused', love.graphics.getWidth() / 2 - 30, love.graphics.getHeight() / 2)
+                love.graphics.print('Paused', WindowWidth / 2 - 30, WindowHeight / 2)
             end
         end
     end

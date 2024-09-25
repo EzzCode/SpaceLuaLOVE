@@ -13,11 +13,12 @@ function Asteroid.new()
         spriteScale = { x = 1, y = 1 },
         speed = 20
     })
-    self.speed = math.random(50, 100)
+    self.speed = math.random(50, 100) 
     self.list = {}
     self.spawnRate = math.random(3, 10) 
     self.spawnTimer = 0
     self.warningDuration = 1  -- Duration of the warning before spawning asteroid (in seconds)
+    self.lifeTime = 10  -- Time before asteroid despawns 
     return self
 end
 
@@ -31,27 +32,27 @@ function Asteroid:spawn()
 
     if spawnSide == 1 then  -- Spawn to the left of the screen
         x = -50
-        y = math.random(0, love.graphics.getHeight())
+        y = math.random(0, WindowHeight)
         warningX = 30  -- Show warning just inside the screen
         warningY = y
         velx = 3  -- Ensure the asteroid moves towards the screen
     elseif spawnSide == 2 then  -- Spawn to the right of the screen
-        x = love.graphics.getWidth() + 50
-        y = math.random(0, love.graphics.getHeight())
-        warningX = love.graphics.getWidth() - 30 -- Show warning just inside the screen
+        x = WindowWidth + 50
+        y = math.random(0, WindowHeight)
+        warningX = WindowWidth - 30 -- Show warning just inside the screen
         warningY = y
         velx = -3  -- Ensure the asteroid moves towards the screen
     elseif spawnSide == 3 then  -- Spawn above the screen
-        x = math.random(0, love.graphics.getWidth())
+        x = math.random(0, WindowWidth)
         y = -50
         warningX = x
         warningY = 30  -- Show warning just inside the screen
         vely = 3  -- Ensure the asteroid moves towards the screen
     else  -- Spawn below the screen
-        x = math.random(0, love.graphics.getWidth())
-        y = love.graphics.getHeight() + 50
+        x = math.random(0, WindowWidth)
+        y = WindowHeight + 50
         warningX = x
-        warningY = love.graphics.getHeight() - 30  -- Show warning just inside the screen
+        warningY = WindowHeight - 30  -- Show warning just inside the screen
         vely = -3  -- Ensure the asteroid moves towards the screen
     end
 
@@ -68,16 +69,17 @@ function Asteroid:spawn()
         x = x,
         y = y,
         velocity = {
-            x = math.random() * self.speed * velx,
-            y = math.random() * self.speed * vely
+            x = math.random() * self.speed * velx * GlobalScale.x,
+            y = math.random() * self.speed * vely * GlobalScale.y
         },
         angle = math.rad(math.random(math.pi)),
-        scale = math.random(10, 20) / 10,
+        scale = math.random(10, 20) / 10 * GlobalScale.x,
         isAlive = true,
         spawnWarning = true,  -- Indicates if the warning should be shown
         warningTimer = self.warningDuration,  -- Set the warning timer
         warningX = warningX,  -- Position for the warning
-        warningY = warningY
+        warningY = warningY,
+        timeAlive = 0,
     }
 
     asteroid.radius = asteroid.sprite.sprite.width * asteroid.scale / 6
@@ -104,7 +106,7 @@ function Asteroid:draw()
             asteroid.sprite.sprite.spriteScale = { x = asteroid.scale, y = asteroid.scale }
             asteroid.sprite:draw()
             
-            if Debugging then
+            if Debugging and asteroid.isAlive then
                 love.graphics.circle("line", asteroid.x - 6, asteroid.y, asteroid.radius)
             end
         end
@@ -119,15 +121,19 @@ function Asteroid:move(dt)
             asteroid.y = asteroid.y + asteroid.velocity.y * dt
 
             -- Check if the asteroid has appeared on-screen
-            if asteroid.x + asteroid.radius > 0 and asteroid.x - asteroid.radius < love.graphics.getWidth() and
-               asteroid.y + asteroid.radius > 0 and asteroid.y - asteroid.radius < love.graphics.getHeight() then
+            if asteroid.x + asteroid.radius > 0 and asteroid.x - asteroid.radius < WindowWidth and
+               asteroid.y + asteroid.radius > 0 and asteroid.y - asteroid.radius < WindowWidth then
                 asteroid.hasAppeared = true  -- Asteroid has appeared on-screen
             end
-
+            asteroid.timeAlive = asteroid.timeAlive + dt
+            if asteroid.timeAlive > self.lifeTime then
+                -- asteroid.isAlive = false
+                asteroid.hasAppeared = true
+            end
             -- Remove asteroid if it has moved off-screen after appearing
             if asteroid.hasAppeared and 
-              (asteroid.x < -asteroid.radius or asteroid.x > love.graphics.getWidth() + asteroid.radius or
-               asteroid.y < -asteroid.radius or asteroid.y > love.graphics.getHeight() + asteroid.radius) then
+              (asteroid.x < -asteroid.radius or asteroid.x > WindowWidth + asteroid.radius or
+               asteroid.y < -asteroid.radius or asteroid.y > WindowWidth + asteroid.radius) then
                 table.remove(self.list, i)
             end
         end

@@ -47,11 +47,14 @@ function Ship:setupHitboxes()
 end
 
 function Ship:setupTail(config)
+    local spriteScale = config.tailScale or { x = 0.6, y = 0.4 }
+    spriteScale.x = spriteScale.x * GlobalScale.x
+    spriteScale.y = spriteScale.y * GlobalScale.y
     return {
         image = love.graphics.newImage(config.tailPath),
         width = config.tailWidth,
         height = config.tailHeight,
-        spriteScale = config.tailScale or { x = 0.6, y = 0.4 }
+        spriteScale = spriteScale
     }
 end
 
@@ -83,8 +86,8 @@ end
 
 function Ship:drawTail()
     if self.thrust or self.tail.spriteScale.y > 0.3 then
-        local OffsetX = 25
-        local OffsetY = -43
+        local OffsetX = 25 * GlobalScale.x
+        local OffsetY = -43 * GlobalScale.y
         local X = self.position.x + math.cos(self.angle - math.pi / 2) * OffsetY -
             math.sin(self.angle - math.pi / 2) * OffsetX
         local Y = self.position.y + math.sin(self.angle - math.pi / 2) * OffsetY +
@@ -95,7 +98,7 @@ function Ship:drawTail()
             X,
             Y,
             self.angle,
-            self.tail.spriteScale.x, self.tail.spriteScale.y,
+            self.tail.spriteScale.x, self.tail.spriteScale.y ,
             self.tail.width / 2,
             self.tail.height / 2
         )
@@ -117,12 +120,12 @@ function Ship:applyFriction(dt, friction)
         self.xspeed = self.xspeed - self.xspeed * friction * dt
         self.yspeed = self.yspeed - self.yspeed * friction * dt
         
-        if self.tail.spriteScale.y > 0.3 then
+        if self.tail.spriteScale.y  > 0.3  then
             self.tail.spriteScale.y = self.tail.spriteScale.y - 1 * dt
         end
     else
-        if self.tail.spriteScale.y < 0.8 then
-            self.tail.spriteScale.y = self.tail.spriteScale.y + 0.8 * dt
+        if self.tail.spriteScale.y < 0.8  then
+            self.tail.spriteScale.y = self.tail.spriteScale.y + 0.8 * dt 
         end
     end
 end
@@ -142,7 +145,7 @@ function Ship:updatePosition()
 end
 
 function Ship:constrainToScreen()
-    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local screenWidth, screenHeight = WindowWidth, WindowHeight
     local constrained = false
 
     -- Store old position for checking

@@ -18,7 +18,7 @@ function Background.new(layers)
             height = love.graphics.newImage(layer.image):getHeight(),
         }
         -- Scale the background based on screen size
-        layerData.scaleFactor = love.graphics.getHeight() / layerData.height
+        layerData.scaleFactor = WindowHeight / layerData.height
         table.insert(self.layers, layerData)
     end
     self:updateScaleFactor()
@@ -40,8 +40,8 @@ end
 -- Draw each layer of the background, repeating it to fill the screen
 function Background:draw()
     for _, layer in ipairs(self.layers) do
-        local tilesX = math.ceil(love.graphics.getWidth() / (layer.width * layer.scaleFactor)) + 1
-        local tilesY = math.ceil(love.graphics.getHeight() / (layer.height * layer.scaleFactor)) + 1
+        local tilesX = math.ceil(WindowWidth / (layer.width * layer.scaleFactor)) + 1
+        local tilesY = math.ceil(WindowHeight / (layer.height * layer.scaleFactor)) + 1
         for x = 0, tilesX - 1 do
             for y = 0, tilesY - 1 do
                 love.graphics.draw(
@@ -67,7 +67,7 @@ end
 -- Update scale factor based on screen height
 function Background:updateScaleFactor()
     for _, layer in ipairs(self.layers) do
-        layer.scaleFactor = love.graphics.getHeight() / layer.height
+        layer.scaleFactor = WindowHeight / layer.height
     end
 end
 
