@@ -52,8 +52,8 @@ function love.update(dt)
                 timeSinceLastShot = 0 -- Reset the timer
             end
             -- Check if the player is hit
-            local flag = player.ship:collisions(enemy.ship.hitboxes)
-            flag = player.ship:collisions(enemy.laser.hitboxes) or flag
+            local flag = player.ship:collisions(enemy.ship.hitboxes, true)
+            flag = player.ship:collisions(enemy.laser.hitboxes, false) or flag
             flag = asteroid:collision(player.ship.hitboxes) or flag
 
             if flag then

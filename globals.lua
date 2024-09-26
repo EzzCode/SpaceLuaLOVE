@@ -1,4 +1,3 @@
-local Sprite = require "Components.Sprite"
 Debugging = false 
 Opacity = 1
 function CalculateGlobals()

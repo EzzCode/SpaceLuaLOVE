@@ -182,7 +182,7 @@ end
 
 
 
-function Ship:collisions(hitboxes)
+function Ship:collisions(hitboxes, move)
     local collided = false
     for _, hitbox in ipairs(hitboxes) do
         for _, shipHitbox in ipairs(self.hitboxes) do
@@ -198,12 +198,19 @@ function Ship:collisions(hitboxes)
                     resolveX, resolveY = (dx / distance) * overlap, (dy / distance) * overlap
                 end
             elseif shipHitbox.width and hitbox.width then
-                -- Rectangle vs Rectangle
+                -- Rectangle vs Rectangle (Improved resolution calculation)
                 if shipHitbox.x < hitbox.x + hitbox.width and shipHitbox.x + shipHitbox.width > hitbox.x and
                    shipHitbox.y < hitbox.y + hitbox.height and shipHitbox.y + shipHitbox.height > hitbox.y then
                     collision = true
-                    local overlapX = math.min(shipHitbox.x + shipHitbox.width - hitbox.x, hitbox.x + hitbox.width - shipHitbox.x)
-                    local overlapY = math.min(shipHitbox.y + shipHitbox.height - hitbox.y, hitbox.y + hitbox.height - shipHitbox.y)
+                    local overlapX1 = hitbox.x + hitbox.width - shipHitbox.x
+                    local overlapX2 = shipHitbox.x + shipHitbox.width - hitbox.x
+                    local overlapY1 = hitbox.y + hitbox.height - shipHitbox.y
+                    local overlapY2 = shipHitbox.y + shipHitbox.height - hitbox.y
+
+                    local overlapX = math.min(overlapX1, overlapX2)
+                    local overlapY = math.min(overlapY1, overlapY2)
+
+                    -- Resolve on the axis with the smaller overlap
                     if overlapX < overlapY then
                         resolveX = shipHitbox.x < hitbox.x and -overlapX or overlapX
                     else
@@ -211,7 +218,7 @@ function Ship:collisions(hitboxes)
                     end
                 end
             else
-                -- Circle vs Rectangle
+                -- Circle vs Rectangle (Improved edge case handling)
                 local circle, rect = shipHitbox.radius and shipHitbox or hitbox, shipHitbox.width and shipHitbox or hitbox
                 local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.width))
                 local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.height))
@@ -223,7 +230,7 @@ function Ship:collisions(hitboxes)
                     if distance > 0 then
                         resolveX, resolveY = (dx / distance) * overlap, (dy / distance) * overlap
                     else
-                        -- Handle the case where the circle's center is exactly on the rectangle's edge
+                        -- Handle the case where the circle's center is exactly at the rectangle's edge or corner
                         resolveX, resolveY = circle.radius, 0
                     end
                 end
@@ -231,15 +238,18 @@ function Ship:collisions(hitboxes)
 
             if collision then
                 collided = true
-                -- Apply a fraction of the resolution to avoid over-correction
-                local fraction = 0.5
-                self.position.x = self.position.x + resolveX * fraction
-                self.position.y = self.position.y + resolveY * fraction
+                if move then
+                    -- Apply a fraction of the resolution to avoid over-correction
+                    local fraction = 0.5
+                    self.position.x = self.position.x + resolveX * fraction
+                    self.position.y = self.position.y + resolveY * fraction
+                end
             end
         end
     end
     return collided
 end
+
 
 
 

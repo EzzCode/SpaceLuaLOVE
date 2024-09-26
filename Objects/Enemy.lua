@@ -174,8 +174,7 @@ function Enemy:initLaser()
     }),
         spawnWarning = false,
         warningTimer = self.warningDuration,
-        hitboxes = {},
-        positions = {}
+        hitboxes = {}
     }
 
 
@@ -220,8 +219,8 @@ end
 
 function Enemy:drawLasers()
     self.laser.hitboxes = {}
-    local width = self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x
-    local height = self.laser.sprite.sprite.height * self.laser.sprite.sprite.spriteScale.y
+    local width = - self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x
+    local height = self.laser.sprite.sprite.height 
 
     for i = 1, 2 do
         local sign = (i == 1) and 1 or -1
@@ -229,16 +228,18 @@ function Enemy:drawLasers()
         self.laser.sprite.x = (self.ship.position.x + OffsetX) + (self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x)/2 
         self.laser.sprite.y = self.ship.position.y + OffsetY * sign
         if self.laser.spawnWarning then
-            self:drawWarning(self.laser.sprite.x, self.laser.sprite.y, -width, height)
+            self:drawWarning(self.laser.sprite.x, self.laser.sprite.y, width, height)
         else
             self.laser.sprite:draw()
             if self.laser.sprite.animation.isPlaying then
                 table.insert(self.laser.hitboxes, {
                     x = self.laser.sprite.x - width / 2,
-                    y = self.laser.sprite.y - height / 2,
-                    width = width,
-                    height = height
+                    y = self.laser.sprite.y - height / 4,
+                    width =  width,
+                    height = height/4
                 })
+            else
+                self.laser.hitboxes = {}
             end
         end
     end
