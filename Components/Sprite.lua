@@ -50,8 +50,8 @@ function Sprite:setupAnimation(config)
     }
 
     local spriteSheetWidth = self.sprite.image:getWidth()
-    self.sprite.width = spriteSheetWidth / animation.frames
-    self.sprite.height = self.sprite.image:getHeight()
+    self.sprite.width = config.quadWidth or spriteSheetWidth / animation.frames
+    self.sprite.height = config.quadHeight or self.sprite.image:getHeight()
     for i = 1, animation.frames do
         animation.quads[i] = love.graphics.newQuad(
             (i - 1) * self.sprite.width,

@@ -183,44 +183,62 @@ end
 
 
 function Ship:collisions(hitboxes)
+    local collided = false
     for _, hitbox in ipairs(hitboxes) do
         for _, shipHitbox in ipairs(self.hitboxes) do
+            local collision, resolveX, resolveY = false, 0, 0
+
             if shipHitbox.radius and hitbox.radius then
                 -- Circle vs Circle
                 local dx, dy = shipHitbox.x - hitbox.x, shipHitbox.y - hitbox.y
                 local distance = math.sqrt(dx * dx + dy * dy)
                 if distance < shipHitbox.radius + hitbox.radius then
+                    collision = true
                     local overlap = shipHitbox.radius + hitbox.radius - distance
-                    self.position.x, self.position.y = self.position.x + (dx / distance) * overlap, self.position.y + (dy / distance) * overlap
-                    return true
+                    resolveX, resolveY = (dx / distance) * overlap, (dy / distance) * overlap
                 end
             elseif shipHitbox.width and hitbox.width then
                 -- Rectangle vs Rectangle
                 if shipHitbox.x < hitbox.x + hitbox.width and shipHitbox.x + shipHitbox.width > hitbox.x and
                    shipHitbox.y < hitbox.y + hitbox.height and shipHitbox.y + shipHitbox.height > hitbox.y then
+                    collision = true
                     local overlapX = math.min(shipHitbox.x + shipHitbox.width - hitbox.x, hitbox.x + hitbox.width - shipHitbox.x)
                     local overlapY = math.min(shipHitbox.y + shipHitbox.height - hitbox.y, hitbox.y + hitbox.height - shipHitbox.y)
-                    if overlapX < overlapY then self.position.x = self.position.x + (shipHitbox.x < hitbox.x and -overlapX or overlapX)
-                    else self.position.y = self.position.y + (shipHitbox.y < hitbox.y and -overlapY or overlapY) end
-                    return true
+                    if overlapX < overlapY then
+                        resolveX = shipHitbox.x < hitbox.x and -overlapX or overlapX
+                    else
+                        resolveY = shipHitbox.y < hitbox.y and -overlapY or overlapY
+                    end
                 end
             else
                 -- Circle vs Rectangle
-                local cx, cy = shipHitbox.radius and shipHitbox.x or hitbox.x, shipHitbox.radius and shipHitbox.y or hitbox.y
-                local rect = shipHitbox.width and shipHitbox or hitbox
-                local closestX = math.max(rect.x, math.min(cx, rect.x + rect.width))
-                local closestY = math.max(rect.y, math.min(cy, rect.y + rect.height))
-                local dx, dy = cx - closestX, cy - closestY
-                if math.sqrt(dx * dx + dy * dy) < (shipHitbox.radius or hitbox.radius) then
-                    local overlap = (shipHitbox.radius or hitbox.radius) - math.sqrt(dx * dx + dy * dy)
-                    self.position.x, self.position.y = self.position.x + (dx / math.sqrt(dx * dx + dy * dy)) * overlap,
-                                                       self.position.y + (dy / math.sqrt(dx * dx + dy * dy)) * overlap
-                    return true
+                local circle, rect = shipHitbox.radius and shipHitbox or hitbox, shipHitbox.width and shipHitbox or hitbox
+                local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.width))
+                local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.height))
+                local dx, dy = circle.x - closestX, circle.y - closestY
+                local distance = math.sqrt(dx * dx + dy * dy)
+                if distance < circle.radius then
+                    collision = true
+                    local overlap = circle.radius - distance
+                    if distance > 0 then
+                        resolveX, resolveY = (dx / distance) * overlap, (dy / distance) * overlap
+                    else
+                        -- Handle the case where the circle's center is exactly on the rectangle's edge
+                        resolveX, resolveY = circle.radius, 0
+                    end
                 end
+            end
+
+            if collision then
+                collided = true
+                -- Apply a fraction of the resolution to avoid over-correction
+                local fraction = 0.5
+                self.position.x = self.position.x + resolveX * fraction
+                self.position.y = self.position.y + resolveY * fraction
             end
         end
     end
-    return false
+    return collided
 end
 
 
@@ -237,8 +255,6 @@ function Ship:updateAngle(dt)
     
     self.angle = self.angle + angleDifference
 end
-
-
 
 function Ship:update(dt)
     self.shipSprite:updateAnimation(dt)

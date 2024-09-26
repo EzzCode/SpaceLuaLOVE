@@ -2,6 +2,13 @@ local Ship = require('Objects.Ship')
 local Bullet = require('Objects.Bullet')
 local Sprite = require('Components.Sprite')
 local Enemy = {}
+local explosion = Sprite.new({
+    spritePath = 'Assets/spritesheet.png',
+    animationFrames = 11,
+    frameTime = 0.08,
+    spriteScale = { x = 0.6, y = 0.6 },
+    playOnce = true
+})
 Enemy.__index = Enemy
 
 function Enemy.new()
@@ -11,7 +18,7 @@ function Enemy.new()
 end
 
 function Enemy:init()
-    self.life = 100
+    self.life = 200
     self.fireDelay = 3
     self.bulletBurstCount = 5
     self.bulletInterval = 0.1
@@ -23,9 +30,9 @@ function Enemy:init()
     self.explosionQueue = {}
     self.explosionDelay = 0.5
     self.explosionTimer = 0
-    self.warningDuration = 4
+    self.warningDuration = 2
     self.warningScrollX = 0
-    
+
     self:initShip()
     self:initCannons()
     self:initBullets()
@@ -40,7 +47,7 @@ function Enemy:initShip()
         angle = -math.pi / 2,
         spritePath = 'Assets/Ship (18)-1 (1).png',
         spriteWidth = 1109,
-        spriteScale = { x = 0.5 , y = 0.5 },
+        spriteScale = { x = 0.5, y = 0.5 },
         tailPath = 'Assets/BlueTail__000.png',
         tailScale = { x = 0, y = 0 },
         tailWidth = 115,
@@ -57,13 +64,15 @@ end
 function Enemy:setupHitboxes()
     self.ship.hitboxes = {
         {
-            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale.x,
+            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale
+                .x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 4 * self.ship.shipSprite.sprite.spriteScale.y,
             width = 440 * GlobalScale.x,
             height = 110 * GlobalScale.y
         },
         {
-            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale.x,
+            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 2 * self.ship.shipSprite.sprite.spriteScale
+                .x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 4 * self.ship.shipSprite.sprite.spriteScale.y +
                 155 * GlobalScale.y,
             width = 440 * GlobalScale.x,
@@ -77,21 +86,24 @@ function Enemy:setupHitboxes()
             height = 355 * GlobalScale.y
         },
         {
-            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale.x - 25 * GlobalScale.x,
+            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale
+                .x - 25 * GlobalScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y +
                 50 * GlobalScale.y,
             width = 50 * GlobalScale.x,
             height = 455 * GlobalScale.y
         },
         {
-            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale.x +
+            x = self.ship.position.x + self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale
+                .x +
                 25 * GlobalScale.x,
             y = self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y,
             width = 55 * GlobalScale.x,
             height = 555 * GlobalScale.y
         },
         {
-            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale.x,
+            x = self.ship.position.x - self.ship.shipSprite.sprite.height / 4 * self.ship.shipSprite.sprite.spriteScale
+                .x,
             y = self.ship.position.y - 25 * GlobalScale.y,
             width = 225 * GlobalScale.x,
             height = 40 * GlobalScale.y
@@ -125,71 +137,54 @@ function Enemy:initBullets()
     self.bullets = {
         type1 = Bullet.new({
             speed = 1000,
-            spritePath = 'Assets/BlueSpin__000.png'
+            spritePath = 'Assets/BlueSpin__000.png',
+            effectPath = 'Assets/BlueBulletExplo.png',
         }),
         type2 = Bullet.new({
-            speed = 500 ,
+            speed = 500,
             spritePath = 'Assets/BlueBlast__001.png',
-            scale = 0.6 * math.min(GlobalScale.x, GlobalScale.y)
+            effectPath = 'Assets/BlueBulletExplo.png',
+            effectScale = 0.6,
+            scale = 0.6 
         })
     }
 end
 
 function Enemy:initExplosions()
     self.explosions = {
-        ship = Sprite.new(
-            {
-                spritePath = 'Assets/spritesheet.png',
-                animationFrames = 11,
-                frameTime = 0.08,
-                spriteScale = { x = 1.5 , y = 1.5 },
-                playOnce = true
-            }
-        ),
+        ship = explosion,
         cannons = {}
     }
     for i = 1, #self.cannons.list do
-        local sprite = Sprite.new(
-            {
-                spritePath = 'Assets/spritesheet.png',
-                animationFrames = 11,
-                frameTime = 0.08,
-                spriteScale = { x = 0.6 , y = 0.6  },
-                playOnce = true
-            }
-        )
+        local sprite = explosion
         table.insert(self.explosions.cannons, sprite)
     end
 end
 
 function Enemy:initLaser()
     self.laser = {
-        list = {},
+        sprite = Sprite.new({
+        x = 0,
+        y = 0,
+        spritePath = 'Assets/3.png',
+        spriteScale = { x = 1, y = 2 * GlobalScale.y },
+        animationFrames = 8,
+        frameTime = 0.1,
+        playOnce = true
+    }),
         spawnWarning = false,
         warningTimer = self.warningDuration,
-        hitboxes = {}
+        hitboxes = {},
+        positions = {}
     }
-    local OffsetX, OffsetY = -1000 , 152 
-    for i = 1, 2 do
-        local sign = (i == 1) and 1 or -1
-        table.insert(self.laser.list, Sprite.new(
-            {
-                x = (self.ship.position.x + OffsetX) * GlobalScale.x,
-                y = (self.ship.position.y + sign * OffsetY) * GlobalScale.y,
-                spritePath = 'Assets/3.png',
-                spriteScale = { x = 1, y = 2 },
-                animationFrames = 8,
-                frameTime = 0.1,
-                playOnce = true
-            }
-        ))
-    end
-    self.laser.list[1].sprite.spriteScale.x = -(WindowWidth / self.laser.list[1].sprite.width) + 4 * GlobalScale.x
-    self.laser.list[2].sprite.spriteScale.x = self.laser.list[1].sprite.spriteScale.x
+
+
+    -- Calculate scale for full window width
+    local scaleX = (WindowWidth / self.laser.sprite.sprite.width) + 4 * GlobalScale.x
+    self.laser.sprite.sprite.spriteScale.x = -scaleX
 end
 
 function Enemy:drawWarning(x, y, width, height)
-    self.laser.hitboxes = {}
     love.graphics.setColor(1, 0, 0, 1)
     love.graphics.setLineWidth(3 * math.min(GlobalScale.x, GlobalScale.y))
     love.graphics.rectangle('line', x - width / 2, y - height / 4, width, height / 3, 10, 10)
@@ -197,83 +192,83 @@ function Enemy:drawWarning(x, y, width, height)
 
     local warningText = "---Danger---     "
     local textWidth = love.graphics.getFont():getWidth(warningText)
-    self.warningScrollX = self.warningScrollX % textWidth
+    self.warningScrollX = (self.warningScrollX or 0) % textWidth
 
     local startX = x - width / 2 - self.warningScrollX
-
-    love.graphics.setColor(1, 0, 0, 1)
 
     for i = -1, math.floor(width / textWidth) do
         love.graphics.printf(warningText, startX + i * textWidth, y - height / 5, textWidth, "left")
     end
 
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(1, 1, 1, Opacity)
 end
 
 function Enemy:updateLasers(dt)
-    for _, laser in ipairs(self.laser.list) do
-        if self.laser.spawnWarning then
-            self.laser.warningTimer = self.laser.warningTimer - dt
-            
-            self.warningScrollX = (self.warningScrollX + 50 * GlobalScale.x * dt)
-            
-            if self.laser.warningTimer <= 0 then
-                self.laser.spawnWarning = false
-                self.laser.warningTimer = self.warningDuration
-                for _, laser in ipairs(self.laser.list) do
-                    laser.animation.isPlaying = true
-                end
-            end
-        else
-            laser:updateAnimation(dt)
+    if self.laser.spawnWarning then
+        self.laser.warningTimer = self.laser.warningTimer - dt
+        self.warningScrollX = (self.warningScrollX or 0) + 50 * GlobalScale.x * dt
+
+        if self.laser.warningTimer <= 0 then
+            self.laser.spawnWarning = false
+            self.laser.warningTimer = self.warningDuration
+            self.laser.sprite.animation.isPlaying = true
         end
+    else
+        self.laser.sprite:updateAnimation(dt)
     end
 end
 
 function Enemy:drawLasers()
-    for _, laser in ipairs(self.laser.list) do
-        local width = -(laser.sprite.width * laser.sprite.spriteScale.x)
-        local height = laser.sprite.height
+    self.laser.hitboxes = {}
+    local width = self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x
+    local height = self.laser.sprite.sprite.height * self.laser.sprite.sprite.spriteScale.y
+
+    for i = 1, 2 do
+        local sign = (i == 1) and 1 or -1
+        local OffsetX, OffsetY = -30 * GlobalScale.x, 152 * GlobalScale.y
+        self.laser.sprite.x = (self.ship.position.x + OffsetX) + (self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x)/2 
+        self.laser.sprite.y = self.ship.position.y + OffsetY * sign
         if self.laser.spawnWarning then
-            self:drawWarning(laser.x, laser.y, width, height)
+            self:drawWarning(self.laser.sprite.x, self.laser.sprite.y, -width, height)
         else
-            laser:draw()
-            if laser.animation.isPlaying then
+            self.laser.sprite:draw()
+            if self.laser.sprite.animation.isPlaying then
                 table.insert(self.laser.hitboxes, {
-                    x = laser.x - width / 2,
-                    y = laser.y - height / 4,
+                    x = self.laser.sprite.x - width / 2,
+                    y = self.laser.sprite.y - height / 2,
                     width = width,
-                    height = height/4
+                    height = height
                 })
-            else 
-                self.laser.hitboxes = {}
             end
         end
     end
-    for _, hitbox in ipairs(self.laser.hitboxes) do
-        love.graphics.rectangle('line', hitbox.x, hitbox.y, hitbox.width, hitbox.height)
+
+    if Debugging then
+        for _, hitbox in ipairs(self.laser.hitboxes) do
+            love.graphics.rectangle('line', hitbox.x, hitbox.y, hitbox.width, hitbox.height)
+        end
     end
 end
 
 function Enemy:fireLasers()
-    local OffsetX, OffsetY = -30 * GlobalScale.x, 152 * GlobalScale.y
+    local OffsetX = -30 * GlobalScale.x
     self.laser.spawnWarning = true
-    for i, laser in ipairs(self.laser.list) do
-        local sign = (i == 1) and 1 or -1
-        laser.x = (self.ship.position.x + OffsetX) + (laser.sprite.width * laser.sprite.spriteScale.x) / 2
-        laser.y = self.ship.position.y + OffsetY * sign
-        laser.animation.currentFrame = 1
-        laser.animation.playOnce = true
-    end
+    self.laser.sprite.x = (self.ship.position.x + OffsetX) +
+    (self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x) / 2
+    self.laser.sprite.y = self.ship.position.y
+    self.laser.sprite.animation.currentFrame = 1
+    self.laser.sprite.animation.elapsedTime = 0
+    self.laser.sprite.animation.playOnce = true
+    self.laser.sprite.animation.isPlaying = false -- Will be set to true after warning
 end
 
 function Enemy:draw()
     self.ship:draw()
+    self:drawLasers()
     self:drawCannons()
     self:drawHealthBar()
     self:drawExplosions()
     self:drawBullets()
-    self:drawLasers()
 end
 
 function Enemy:drawCannons()
@@ -285,12 +280,13 @@ function Enemy:drawCannons()
 end
 
 function Enemy:drawHealthBar()
-    local r, g, b, a = love.graphics.getColor()
-    love.graphics.setColor(1, 0, 0, a)
+    if self.life <= 0 then self.life = 0 end
+    love.graphics.setColor(1, 0, 0, Opacity)
     love.graphics.rectangle('fill', WindowWidth - 27 * GlobalScale.x,
-        self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y, 10 * GlobalScale.x,
-        self.life / 100 * 555 * GlobalScale.y)
-    love.graphics.setColor(1, 1, 1, a)
+        self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y,
+        10 * GlobalScale.x,
+        self.life / 200 * 555 * GlobalScale.y)
+    love.graphics.setColor(1, 1, 1, Opacity)
     love.graphics.print('Health', WindowWidth,
         self.ship.position.y - self.ship.shipSprite.sprite.width / 2 * self.ship.shipSprite.sprite.spriteScale.y,
         math.pi / 2)
@@ -330,7 +326,7 @@ function Enemy:moveCannons(player, dt)
         local targetAngle = math.atan2(player.ship.position.y - cannon.y, player.ship.position.x - cannon.x) +
             math.pi / 2
         local angleDifference = (targetAngle - cannon.angle + math.pi) % (2 * math.pi) - math.pi
-        local maxRotationSpeed = 0.4 * dt
+        local maxRotationSpeed = 0.3 * dt
         cannon.angle = cannon.angle + math.min(math.max(angleDifference, -maxRotationSpeed), maxRotationSpeed)
     end
 end
@@ -342,7 +338,7 @@ function Enemy:updateFiringMechanism(dt)
     if fireChance <= 2 then
         self:fireBullets("type2")
     end
-    if fireChance == 1 and not self.laser.spawnWarning then
+    if fireChance == 1 and not self.laser.sprite.animation.isPlaying then
         self:fireLasers()
     end
 
@@ -379,12 +375,17 @@ function Enemy:fireBullets(type)
 end
 
 function Enemy:triggerExplosions()
+    self.bullets.type1.list = {}
+    self.bullets.type2.list = {}
+    self.laser.list = {}
     self.isExploding = true
+
     self.explosionQueue = {}
     for i, cannon in ipairs(self.cannons.list) do
         table.insert(self.explosionQueue, { type = "cannon", index = i, x = cannon.x, y = cannon.y })
     end
-    table.insert(self.explosionQueue, { type = "ship", x = self.ship.position.x + 100 * GlobalScale.x, y = self.ship.position.y - 50 * GlobalScale.y })
+    table.insert(self.explosionQueue,
+        { type = "ship", x = self.ship.position.x + 100 * GlobalScale.x, y = self.ship.position.y - 50 * GlobalScale.y })
 end
 
 function Enemy:updateExplosions(dt)
@@ -394,23 +395,14 @@ function Enemy:updateExplosions(dt)
     if self.explosionTimer >= self.explosionDelay and #self.explosionQueue > 0 then
         local nextExplosion = table.remove(self.explosionQueue, 1)
         if nextExplosion.type == "cannon" then
-            self.explosions.cannons[nextExplosion.index].x = nextExplosion.x
-            self.explosions.cannons[nextExplosion.index].y = nextExplosion.y
-            self.explosions.cannons[nextExplosion.index].animation.currentFrame = 1
-            self.explosions.cannons[nextExplosion.index].animation.isPlaying = true
+            TriggerExplosions(explosion, nextExplosion.x, nextExplosion.y, 0.6)
         elseif nextExplosion.type == "ship" then
-            self.explosions.ship.x = nextExplosion.x
-            self.explosions.ship.y = nextExplosion.y
-            self.explosions.ship.animation.isPlaying = true
+            TriggerExplosions(explosion, nextExplosion.x, nextExplosion.y, 1.5)
         end
         self.explosionTimer = 0
         return
     end
-
-    for _, explosion in ipairs(self.explosions.cannons) do
-        explosion:updateAnimation(dt)
-    end
-    self.explosions.ship:updateAnimation(dt)
+    explosion:updateAnimation(dt)
 end
 
 function Enemy:move(dt)

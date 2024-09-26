@@ -1,58 +1,135 @@
 local Background = require 'Objects.Background'
+local Menu = require 'States.Menu'
 
-function Game()
-    local game = {
-        lives = 3,
-        enemies = {},
-        state = {
-            menu = true,
-            paused = false,
-            running = false,
-            over = false
-        },
-        background = Background.new({
-            {image = "Assets/Space Background (1).png", speed = 50},  -- Farther, slower
-            {image = "Assets/Space Background (2).png", speed = 75}, -- Middle layer
-            {image = "Assets/Space Background (3).png", speed = 100}  -- Closer, faster
-        }),
+local Game = {}
+Game.__index = Game
 
-        changeGameState = function(self, state)
-            for k in pairs(self.state) do
-                self.state[k] = (k == state)
-            end
-        end,
-
-        startGame = function(self, Player, Enemy)
-            self:changeGameState("running")
-            Enemy:init()
-            self.lives = 3
-            Player:initShip()
-            Player.ship.position.x = 10 + Player.ship.hitboxes[1].radius
-            Player.ship.position.y = WindowHeight / 2
-            self.enemies = {}
-        end,
-
-        update = function(self, dt)
-            if self.state.running then
-                self.background:update(dt, 1, 0, false)
-            elseif self.state.menu then
-                self.background:update(dt, 0.5, 0.2 , false)
-            elseif self.state.paused then
-                self.background:update(dt, 1, 1, true)
-            end
-        end,
-
-        draw = function(self)
-            self.background:draw()
-        end,
-
-        fullscreenToggle = function()
-            love.window.setFullscreen(not love.window.getFullscreen())
-            CalculateGlobals ()
-        end
+-- Constructor
+function Game:new(player, enemy, asteroid)
+    local self = setmetatable({}, Game)
+    self.player = player
+    self.enemy = enemy
+    self.asteroid = asteroid
+    self.lives = 5
+    self.enemies = {}
+    self.state = {
+        menu = true,
+        paused = false,
+        running = false,
+        over = false
     }
+    self.background = Background.new({
+        { image = "Assets/Space Background (1).png", speed = 50 }, -- Farther, slower
+        { image = "Assets/Space Background (2).png", speed = 75 }, -- Middle layer
+        { image = "Assets/Space Background (3).png", speed = 100 } -- Closer, faster
+    })
+    self.menu = self:initMenu(player, enemy)
+    self.lifeIcon = love.graphics.newImage('Assets/Ship (7).png')
 
-    return game
+    return self
+end
+
+function Game:initMenu(player, enemy)
+    return Menu.new(self, player, enemy)
+end
+
+-- Method to change the game state
+function Game:changeGameState(state)
+    local r, g, b = love.graphics.getColor()
+    for k in pairs(self.state) do
+        self.state[k] = (k == state)
+    end
+    if state == "paused" then
+        love.graphics.setColor(r, g, b, 0.5)
+        Opacity = 0.5
+    else
+        love.graphics.setColor(r, g, b, 1)
+        Opacity = 1
+    end
+end
+
+-- Method to start the game
+function Game:startGame(player, enemy)
+    self:changeGameState("running")
+    enemy:init()
+    self.lives = 5
+    player:initShip()
+    player.ship.position.x = 10 + player.ship.hitboxes[1].radius
+    player.ship.position.y = WindowHeight / 2
+    self.enemies = {}
+end
+
+-- Method to update game state
+function Game:update(dt)
+    if self.state.running then
+        self.background:update(dt, 1, 0, false)
+    elseif self.state.menu then
+        self.background:update(dt, 0.5, 0.2, false)
+    elseif self.state.paused then
+        self.background:update(dt, 1, 1, true)
+    end
+end
+
+-- Method to draw game objects
+function Game:draw()
+    if self.state.running then
+        self.background:draw()
+        if self.lives > 0 then
+            self.player:draw()
+        end
+        self.asteroid:draw()
+        self.enemy:draw()
+        local image = self.lifeIcon
+        local iconScale = 0.1 * GlobalScale.x  -- Scale down the life icon
+        local iconWidth = image:getWidth() * iconScale
+        local iconHeight = image:getHeight() * iconScale
+        local spacing = iconWidth + 10  -- Spacing between icons
+    
+        for i = 1, self.lives do
+            love.graphics.draw(self.lifeIcon, 10 + (i - 1) * spacing, 30, 0, iconScale, iconScale)
+        end
+    elseif self.state.menu then
+        local r, g, b = love.graphics.getColor()
+        love.graphics.setColor(r, g, b, 0.5)
+        self.background:draw()
+        love.graphics.setColor(r, g, b, 1)
+        love.graphics.setFont(love.graphics.newFont(55))
+        love.graphics.printf("Ezz can't think of a title", 0, WindowHeight / 4, WindowWidth, "center")
+        love.graphics.setFont(love.graphics.newFont(12))
+        self.menu:draw("main")
+    elseif self.state.paused then
+        local r, g, b = love.graphics.getColor()
+        love.graphics.setColor(r, g, b, 0.5)
+        self.background:draw()
+        self.player:draw()
+        self.enemy:draw()
+        self.asteroid:draw()
+        love.graphics.setColor(r, g, b, 1)
+        local image = self.lifeIcon
+        local iconScale = 0.1 * GlobalScale.x  -- Scale down the life icon
+        local iconWidth = image:getWidth() * iconScale
+        local iconHeight = image:getHeight() * iconScale
+        local spacing = iconWidth + 10  -- Spacing between icons
+    
+        for i = 1, self.lives do
+            love.graphics.draw(self.lifeIcon, 10 + (i - 1) * spacing, 30, 0, iconScale, iconScale)
+        end
+        love.graphics.setFont(love.graphics.newFont(30))
+        love.graphics.printf('Paused', 0, WindowHeight / 2 - 50, WindowWidth, 'center')
+        love.graphics.setFont(love.graphics.newFont(15))
+        love.graphics.printf('Press ESC to resume', 0, WindowHeight / 2 + 50, WindowWidth, 'center')
+        love.graphics.setFont(love.graphics.newFont(12))
+    elseif self.state.over then
+        self.menu:draw("over")
+        love.graphics.print('Game Over', 10, 30)
+    end
+    love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 10)
+end
+
+-- Method to toggle fullscreen mode
+function Game:fullscreenToggle()
+    love.window.setFullscreen(not love.window.getFullscreen())
+    CalculateGlobals()
 end
 
 return Game
