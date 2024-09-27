@@ -11,7 +11,8 @@ function Menu.new(game, player, enemy)
     
     self.buttons = {
         main = self:createMainMenuButtons(),
-        over = self:createGameOverButtons()
+        over = self:createGameOverButtons(),
+        win = self:createGameOverButtons()
     }
     
     return self
@@ -19,7 +20,7 @@ end
 
 function Menu:createMainMenuButtons()
     return {
-        Button:new("Play Game", function() self.game:startGame(self.player, self.enemy) end, nil, 120, 40),
+        Button:new("Play Game", function() self.game:startGame() end, nil, 120, 40),
         Button:new("FullScreen", function() self.game:fullscreenToggle() end, nil, 120, 40),
         Button:new("Exit Game", love.event.quit, nil, 120, 40)
     }
@@ -27,7 +28,7 @@ end
 
 function Menu:createGameOverButtons()
     return {
-        Button:new("Play Again", function() self.game:startGame(self.player, self.enemy) end, nil, 120, 40),
+        Button:new("Play Again", function() self.game:startGame() end, nil, 120, 40),
         Button:new("Menu", function() self.game:changeGameState("menu") end, nil, 120, 40),
         Button:new("Exit Game", love.event.quit, nil, 120, 40)
     }
@@ -51,7 +52,7 @@ end
 
 function Menu:mousepressed(x, y, button)
     if button == 1 then
-        local currentState = self.game.state.menu and "main" or (self.game.state.over and "over" or nil)
+        local currentState = self.game.state.menu and "main" or (self.game.state.over and "over" or nil) or (self.game.state.win and "win" or nil)
         if currentState then
             for _, btn in ipairs(self.buttons[currentState]) do
                 btn:checkPressed(x, y)

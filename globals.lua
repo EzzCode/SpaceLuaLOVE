@@ -1,5 +1,7 @@
+require('Components.SFX')
 Debugging = false 
 Opacity = 1
+Sfx = SFX()
 function CalculateGlobals()
     WindowWidth, WindowHeight = love.graphics.getDimensions()
     GlobalScale = {x = WindowWidth / 1280 * 0.75, y = WindowHeight / 720 * 0.75}
@@ -11,7 +13,6 @@ function TriggerExplosions(explosion, x, y , scale)
     explosion.sprite.spriteScale = { x = scale * GlobalScale.x, y = scale * GlobalScale.y }
     explosion.animation.currentFrame = 1
     explosion.animation.isPlaying = true
-    
 end
 
 Shader = love.graphics.newShader[[
@@ -61,13 +62,4 @@ vec4 effect(vec4 color, Image texture, vec2 textureCoords, vec2 screenCoords) {
 
     return texColor + bloomColor * color.a;  // Combine original color with bloom
 }
-]]
---[[
-local speed = 2
-
-function love.draw()
-	local a = math.abs(math.cos(love.timer.getTime() * speed % 2 * math.pi))
-	love.graphics.setColor(1, 1, 1, a)
-	love.graphics.print("Blink.")
-end
 ]]

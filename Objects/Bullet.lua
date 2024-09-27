@@ -6,6 +6,7 @@ Bullet.__index = Bullet
 function Bullet.new(config)
     local self = setmetatable({}, Bullet)
     self.speed = config.speed or 1000
+    self.sound = "bullet3"
     self.sprite = {
         image = love.graphics.newImage(config.spritePath),
         scale = config.scale or 0.4
@@ -83,6 +84,7 @@ function Bullet:fire(OffsetX, OffsetY, angle, x, y, number)
         }
 
         table.insert(self.list, bullet)
+        Sfx:playFX(self.sound , "multi")
     end
 end
 
@@ -107,6 +109,7 @@ function Bullet:collision(objects)
                     }))    
                     table.remove(self.list, i)                                    -- Remove bullet
                     obj.isAlive = false                                           -- Mark asteroid as dead
+                    Sfx:playFX("explosion2", "multi")
                     hits = hits + 1
                     break                                                         -- Stop checking more objects for this bullet
                 end

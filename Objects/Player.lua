@@ -27,6 +27,7 @@ function Player.new()
         spritePath = 'Assets/GreenSSpin__000.png',
         effectPath = 'Assets/GreenBulletExplo.png',
     })
+    self.bullets.sound = "bullet"
     self.explosion = Sprite.new({
         spritePath = 'Assets/spritesheet.png',
         animationFrames = 11,
@@ -148,6 +149,7 @@ function Player:move(dt)
 end
 
 function Player:destroyShip()
+    Sfx:playFX("explosion", "multi")
     TriggerExplosions(self.explosion, self.ship.position.x, self.ship.position.y, 0.6)
 end
 

@@ -1,1 +1,4 @@
 /.vscode
+/Extras
+*.exe
+*.love

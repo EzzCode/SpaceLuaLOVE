@@ -1,12 +1,14 @@
 local Background = require 'Objects.Background'
 local Menu = require 'States.Menu'
 
+
 local Game = {}
 Game.__index = Game
 
 -- Constructor
 function Game:new(player, enemy, asteroid)
     local self = setmetatable({}, Game)
+    self.sfx = Sfx
     self.player = player
     self.enemy = enemy
     self.asteroid = asteroid
@@ -16,7 +18,8 @@ function Game:new(player, enemy, asteroid)
         menu = true,
         paused = false,
         running = false,
-        over = false
+        over = false,
+        win = false
     }
     self.background = Background.new({
         { image = "Assets/Space Background (1).png", speed = 50 }, -- Farther, slower
@@ -39,24 +42,39 @@ function Game:changeGameState(state)
     for k in pairs(self.state) do
         self.state[k] = (k == state)
     end
+    if state == "running" then
+        self.sfx.bgm:setVolume(0.3)
+    elseif state == "over" then
+        self.sfx:playFX("lose", "single")
+        self.sfx.fxPlayed = false
+    end
     if state == "paused" then
         love.graphics.setColor(r, g, b, 0.5)
+        self.sfx:stopBGM()
         Opacity = 0.5
     else
         love.graphics.setColor(r, g, b, 1)
+        self.sfx:playBGM()
+        self.sfx.bgm:setVolume(0.6)
         Opacity = 1
     end
 end
 
 -- Method to start the game
-function Game:startGame(player, enemy)
+function Game:startGame()
+    Sfx:playFX("click", "single")
     self:changeGameState("running")
-    enemy:init()
+    self.enemy:init()
+    self.asteroid.list = {}
+    self.player.bullets.list = {}
+    self.player.hitFlag = false
+    self.player.BlinkTimer = 0
     self.lives = 5
-    player:initShip()
-    player.ship.position.x = 10 + player.ship.hitboxes[1].radius
-    player.ship.position.y = WindowHeight / 2
+    self.player:initShip()
+    self.player.ship.position.x = 10 + self.player.ship.hitboxes[1].radius
+    self.player.ship.position.y = WindowHeight / 2
     self.enemies = {}
+    Sfx.fxPlayed = false
 end
 
 -- Method to update game state
@@ -121,7 +139,25 @@ function Game:draw()
         love.graphics.setFont(love.graphics.newFont(12))
     elseif self.state.over then
         self.menu:draw("over")
-        love.graphics.print('Game Over', 10, 30)
+        local a = math.abs(math.cos(love.timer.getTime()  % 2 * math.pi))
+        love.graphics.setFont(love.graphics.newFont(60))
+        love.graphics.setColor(1, 0.2, 0.2, a)
+        love.graphics.printf('Skill Issue!', 0, WindowHeight / 4 , WindowWidth, 'center')
+        love.graphics.setColor(1, 1, 1, Opacity)
+        love.graphics.setFont(love.graphics.newFont(12))
+    elseif self.state.win then
+        love.graphics.setColor(1, 1, 1, 0.75)
+        self.player.bullets.list = {}
+        self.background:draw()
+        self.player:draw()
+        self.enemy:draw()
+        self.menu:draw("win")
+        love.graphics.setFont(love.graphics.newFont(60))
+        local a = math.abs(math.cos(love.timer.getTime() * 2 % 2 * math.pi))
+        love.graphics.setColor(1, 1, 1, a)
+        love.graphics.printf('You Win!', 0, WindowHeight / 4 , WindowWidth, 'center')
+        love.graphics.setColor(1, 1, 1, Opacity)
+        love.graphics.setFont(love.graphics.newFont(12))
     end
     love.graphics.print('FPS: ' .. love.timer.getFPS(), 10, 10)
 end

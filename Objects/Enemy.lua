@@ -7,8 +7,10 @@ local explosion = Sprite.new({
     animationFrames = 11,
     frameTime = 0.08,
     spriteScale = { x = 0.6, y = 0.6 },
-    playOnce = true
+    playOnce = true,
+    isPlaying = false
 })
+local a = 0.5
 Enemy.__index = Enemy
 
 function Enemy.new()
@@ -27,12 +29,19 @@ function Enemy:init()
     self.bulletsFiredInBurst = 0
     self.inBurst = false
     self.isExploding = false
+    self.distroyed = false
     self.explosionQueue = {}
     self.explosionDelay = 0.5
     self.explosionTimer = 0
     self.warningDuration = 2
     self.warningScrollX = 0
-
+    self.laserCooldown = 5
+    self.laserTimer = 0
+    explosion.animation.frameTime = 0.08
+    explosion.animation.isPlaying = false
+    Sfx.effects.explosion:setPitch(1)
+    Sfx.effects.explosion:setVolume(0.7)
+    a = 0.5
     self:initShip()
     self:initCannons()
     self:initBullets()
@@ -43,7 +52,7 @@ end
 function Enemy:initShip()
     self.ship = Ship.new({
         position = { x = WindowWidth - 100 * GlobalScale.x, y = WindowHeight / 2 },
-        speed = 20 * GlobalScale.y,
+        speed = 30 * GlobalScale.y,
         angle = -math.pi / 2,
         spritePath = 'Assets/Ship (18)-1 (1).png',
         spriteWidth = 1109,
@@ -148,6 +157,7 @@ function Enemy:initBullets()
             scale = 0.6 
         })
     }
+    self.bullets.type2.sound = "bullet2"
 end
 
 function Enemy:initExplosions()
@@ -169,7 +179,7 @@ function Enemy:initLaser()
         spritePath = 'Assets/3.png',
         spriteScale = { x = 1, y = 2 * GlobalScale.y },
         animationFrames = 8,
-        frameTime = 0.1,
+        frameTime = 0.15,
         playOnce = true
     }),
         spawnWarning = false,
@@ -209,12 +219,14 @@ function Enemy:updateLasers(dt)
 
         if self.laser.warningTimer <= 0 then
             self.laser.spawnWarning = false
+            Sfx.fxPlayed = false
             self.laser.warningTimer = self.warningDuration
             self.laser.sprite.animation.isPlaying = true
         end
     else
         self.laser.sprite:updateAnimation(dt)
     end
+    self.laserTimer = self.laserTimer + dt
 end
 
 function Enemy:drawLasers()
@@ -232,6 +244,7 @@ function Enemy:drawLasers()
         else
             self.laser.sprite:draw()
             if self.laser.sprite.animation.isPlaying then
+                Sfx:playFX('laser', 'single')
                 table.insert(self.laser.hitboxes, {
                     x = self.laser.sprite.x - width / 2,
                     y = self.laser.sprite.y - height / 4,
@@ -239,6 +252,7 @@ function Enemy:drawLasers()
                     height = height/4
                 })
             else
+                Sfx.fxPlayed = false
                 self.laser.hitboxes = {}
             end
         end
@@ -254,6 +268,7 @@ end
 function Enemy:fireLasers()
     local OffsetX = -30 * GlobalScale.x
     self.laser.spawnWarning = true
+    Sfx:playFX('warning', 'single')
     self.laser.sprite.x = (self.ship.position.x + OffsetX) +
     (self.laser.sprite.sprite.width * self.laser.sprite.sprite.spriteScale.x) / 2
     self.laser.sprite.y = self.ship.position.y
@@ -264,12 +279,22 @@ function Enemy:fireLasers()
 end
 
 function Enemy:draw()
-    self.ship:draw()
-    self:drawLasers()
-    self:drawCannons()
-    self:drawHealthBar()
-    self:drawExplosions()
-    self:drawBullets()
+    if not self.distroyed then
+        self.ship:draw()
+        if not self.isExploding then
+            self:drawLasers()
+        end
+        self:drawCannons()
+        self:drawHealthBar()
+        self:drawBullets()
+        self:drawExplosions()
+    elseif a > 0 then
+        a = a - love.timer.getDelta()
+        love.graphics.setColor(1, 1, 1, a)
+        self.ship:draw()
+        self:drawCannons()
+        love.graphics.setColor(1, 1, 1, Opacity)
+    end
 end
 
 function Enemy:drawCannons()
@@ -298,6 +323,44 @@ function Enemy:drawExplosions()
         explosion:draw()
     end
     self.explosions.ship:draw()
+end
+function Enemy:triggerExplosions()
+    self.bullets.type1.list = {}
+    self.bullets.type2.list = {}
+    self.laser.list = {}
+    self.isExploding = true
+
+    self.explosionQueue = {}
+    for i, cannon in ipairs(self.cannons.list) do
+        table.insert(self.explosionQueue, { type = "cannon", index = i, x = cannon.x, y = cannon.y })
+    end
+    table.insert(self.explosionQueue,
+        { type = "ship", x = self.ship.position.x + 100 * GlobalScale.x, y = self.ship.position.y - 50 * GlobalScale.y })
+end
+
+function Enemy:updateExplosions(dt)
+    if not self.isExploding then return end
+
+    self.explosionTimer = self.explosionTimer + dt
+    if self.explosionTimer >= self.explosionDelay and #self.explosionQueue > 0 then
+        local nextExplosion = table.remove(self.explosionQueue, 1)
+        if nextExplosion.type == "cannon" then
+            TriggerExplosions(explosion, nextExplosion.x, nextExplosion.y, 0.6)
+            Sfx:playFX('explosion', 'multi')
+        elseif nextExplosion.type == "ship" then
+            explosion.animation.frameTime = 0.12
+            TriggerExplosions(explosion, nextExplosion.x, nextExplosion.y, 1.5)
+            Sfx.effects.explosion:setPitch(0.5)
+            Sfx.effects.explosion:setVolume(1)
+            Sfx:playFX('explosion', 'multi')
+        end
+        self.explosionTimer = 0
+        return
+    end
+    explosion:updateAnimation(dt)
+    if #self.explosionQueue == 0 and not explosion.animation.isPlaying then
+        self.distroyed = true
+    end
 end
 
 function Enemy:drawBullets()
@@ -339,8 +402,11 @@ function Enemy:updateFiringMechanism(dt)
     if fireChance <= 2 then
         self:fireBullets("type2")
     end
-    if fireChance == 1 and not self.laser.sprite.animation.isPlaying then
-        self:fireLasers()
+    if fireChance == 1 then
+        if self.laserTimer >= self.laserCooldown then
+            self.laserTimer = 0
+            self:fireLasers()
+        end
     end
 
     if not self.inBurst and self.timeSinceLastBurst >= self.fireDelay then
@@ -375,39 +441,9 @@ function Enemy:fireBullets(type)
     end
 end
 
-function Enemy:triggerExplosions()
-    self.bullets.type1.list = {}
-    self.bullets.type2.list = {}
-    self.laser.list = {}
-    self.isExploding = true
-
-    self.explosionQueue = {}
-    for i, cannon in ipairs(self.cannons.list) do
-        table.insert(self.explosionQueue, { type = "cannon", index = i, x = cannon.x, y = cannon.y })
-    end
-    table.insert(self.explosionQueue,
-        { type = "ship", x = self.ship.position.x + 100 * GlobalScale.x, y = self.ship.position.y - 50 * GlobalScale.y })
-end
-
-function Enemy:updateExplosions(dt)
-    if not self.isExploding then return end
-
-    self.explosionTimer = self.explosionTimer + dt
-    if self.explosionTimer >= self.explosionDelay and #self.explosionQueue > 0 then
-        local nextExplosion = table.remove(self.explosionQueue, 1)
-        if nextExplosion.type == "cannon" then
-            TriggerExplosions(explosion, nextExplosion.x, nextExplosion.y, 0.6)
-        elseif nextExplosion.type == "ship" then
-            TriggerExplosions(explosion, nextExplosion.x, nextExplosion.y, 1.5)
-        end
-        self.explosionTimer = 0
-        return
-    end
-    explosion:updateAnimation(dt)
-end
 
 function Enemy:move(dt)
-    if self.isExploding or self.laser.spawnWarning then return end
+    if self.isExploding or self.laser.spawnWarning or self.laser.sprite.animation.isPlaying then return end
 
     local speed = self.ship.speed * dt
     self.direction = self.direction or 1

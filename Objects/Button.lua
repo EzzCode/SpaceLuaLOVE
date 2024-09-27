@@ -23,6 +23,7 @@ function Button:checkPressed(mouseX, mouseY)
             self.func()
         end
     end
+        
 end
 
 function Button:isPointInside(x, y)

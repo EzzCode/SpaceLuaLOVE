@@ -4,12 +4,15 @@ local Game = require('States.Game')
 local Enemy = require('Objects.Enemy')
 local Sprite = require('Components.Sprite')
 local Asteroid = require('Objects.Asteroid')
+local SFX = require('Components.SFX')
 -- Variables for firing control
 local fireRate = 0.25       -- Time in seconds between each bullet
 local timeSinceLastShot = 0 -- Timer to track time between shots
 --seed the random number generator
 math.randomseed(os.time())
-local game, player, enemy, explosion, asteroid
+local game, player, enemy, asteroid
+
+love.window.setIcon(love.image.newImageData("Assets/Ship (7).png"))
 function love.mousepressed(x, y, button)
     if not game.state["running"] then
         game.menu:mousepressed(x, y, button)
@@ -66,7 +69,7 @@ function love.update(dt)
             player:update(dt)
             asteroid:update(dt)
             enemy.ship:update(dt)
-            if love.keyboard.isDown('space') then
+            if love.keyboard.isDown('space') and Debugging then
                 game.lives = 0
                 player:destroyShip()
             end
@@ -79,6 +82,7 @@ function love.update(dt)
 
             if hits > 0 and not player.hitFlag then
                 player.hitFlag = true
+                Sfx:playFX("hit", "multi")
                 if not Debugging then game.lives = game.lives - 1 end
                 if game.lives == 0 then
                     player:destroyShip()
@@ -89,10 +93,19 @@ function love.update(dt)
             player.bullets:collision(enemy.bullets.type2.list)
             if hits > 0 and enemy.life > 0 then
                 enemy.life = enemy.life - hits
+                if enemy.life <= 0 then
+                    game:changeGameState("win")
+                end
             end
         end
         enemy:update(dt, player)
-    elseif game.state["menu"] then
+    elseif game.state["win"] then
+        player:update(dt)
+        asteroid:update(dt)
+        enemy:update(dt, player)   
+        timeSinceLastShot = 0
+    else
+        timeSinceLastShot = 0
     end
 end
 

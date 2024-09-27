@@ -158,6 +158,7 @@ function Asteroid:collision(hitboxes)
                     local distance = math.sqrt(((self.list[i].x - 6) - hitbox.x) ^ 2 + (self.list[i].y - hitbox.y) ^ 2)
                     if distance < self.list[i].radius + hitbox.radius then
                         self.list[i].isAlive = false
+                        Sfx:playFX("explosion2", "multi")
                         return true
                     end
                 elseif hitbox.width and hitbox.height then
@@ -166,6 +167,7 @@ function Asteroid:collision(hitboxes)
                         self.list[i].y < hitbox.y + hitbox.height and
                         self.list[i].y + self.list[i].sprite.height * self.list[i].scale > hitbox.y then
                         self.list[i].isAlive = false
+                        Sfx:playFX("explosion2", "multi")
                         return true
                     end
                 end
