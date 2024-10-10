@@ -54,7 +54,7 @@ function SFX()
                 -- Clone the existing source to allow multiple instances of the same sound effect
                 local fxClone = effects[fx]:clone()
                 fxClone:play()
-            elseif mode == "slow" then    
+            elseif mode == "slow" then
                 if not effects[fx]:isPlaying() then
                     effects[fx]:play()
                 end
@@ -73,7 +73,15 @@ function SFX()
             for _, v in pairs(effects) do
                 v:setVolume(volume)
             end
-        end
+        end,
+
+        stop = function(self)
+            for _, v in pairs(effects) do
+                if v:isPlaying() then
+                    v:stop()
+                end
+            end
+        end,
     }
 end
 

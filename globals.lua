@@ -7,7 +7,6 @@ function CalculateGlobals()
     GlobalScale = {x = WindowWidth / 1280 * 0.75, y = WindowHeight / 720 * 0.75}
 end
 CalculateGlobals()
-
 function TriggerExplosions(explosion, x, y , scale)
     explosion.x, explosion.y = x, y
     explosion.sprite.spriteScale = { x = scale * GlobalScale.x, y = scale * GlobalScale.y }

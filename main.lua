@@ -6,7 +6,7 @@ local Sprite = require('Components.Sprite')
 local Asteroid = require('Objects.Asteroid')
 local SFX = require('Components.SFX')
 -- Variables for firing control
-local fireRate = 0.25       -- Time in seconds between each bullet
+local fireRate = 0.2      -- Time in seconds between each bullet
 local timeSinceLastShot = 0 -- Timer to track time between shots
 --seed the random number generator
 math.randomseed(os.time())
@@ -16,10 +16,6 @@ love.window.setIcon(love.image.newImageData("Assets/Ship (7).png"))
 function love.mousepressed(x, y, button)
     if not game.state["running"] then
         game.menu:mousepressed(x, y, button)
-    else
-        if button == 1 then
-            player:fireBullets()
-        end
     end
 end
 
@@ -50,7 +46,7 @@ function love.update(dt)
             timeSinceLastShot = timeSinceLastShot + dt
 
             -- Check if the left mouse button is held down and enough time has passed since the last shot
-            if love.mouse.isDown(1) and timeSinceLastShot >= fireRate then
+            if (love.mouse.isDown(1) or love.keyboard.isDown('space')) and timeSinceLastShot >= fireRate then
                 player:fireBullets()  -- Fire bullets
                 timeSinceLastShot = 0 -- Reset the timer
             end

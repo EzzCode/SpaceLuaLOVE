@@ -20,22 +20,31 @@ end
 
 function Menu:createMainMenuButtons()
     return {
-        Button:new("Play Game", function() self.game:startGame() end, nil, 120, 40),
-        Button:new("FullScreen", function() self.game:fullscreenToggle() end, nil, 120, 40),
-        Button:new("Exit Game", love.event.quit, nil, 120, 40)
+        Button:new("Play Game", function() self.game:startGame() end),
+        Button:new("FullScreen", function() self.game:fullscreenToggle() end),
+        Button:new("Exit Game", love.event.quit)
     }
 end
 
 function Menu:createGameOverButtons()
     return {
-        Button:new("Play Again", function() self.game:startGame() end, nil, 120, 40),
-        Button:new("Menu", function() self.game:changeGameState("menu") end, nil, 120, 40),
-        Button:new("Exit Game", love.event.quit, nil, 120, 40)
+        Button:new("Play Again", function() self.game:startGame() end),
+        Button:new("Menu", function() self.game:changeGameState("menu") end),
+        Button:new("Exit Game", love.event.quit)
     }
 end
 
+function Menu:update(mouseX, mouseY)
+    local currentState = self.game.state.menu and "main" or (self.game.state.over and "over" or nil) or (self.game.state.win and "win" or nil)
+    if currentState then
+        for _, button in ipairs(self.buttons[currentState]) do
+            button:update(mouseX, mouseY)
+        end
+    end
+end
+
 function Menu:draw(state)
-    local buttonX = WindowWidth * 0.5 - 60
+    local buttonX = WindowWidth * 0.5 - 70  -- Centered based on new button width
     local buttonY = {
         WindowHeight * 0.5,
         WindowHeight * 0.6667,
@@ -49,6 +58,7 @@ function Menu:draw(state)
         end
     end
 end
+
 
 function Menu:mousepressed(x, y, button)
     if button == 1 then

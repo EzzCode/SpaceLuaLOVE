@@ -45,12 +45,14 @@ function Game:changeGameState(state)
     if state == "running" then
         self.sfx.bgm:setVolume(0.3)
     elseif state == "over" then
-        self.sfx:playFX("lose", "single")
+        self.sfx:stop()
+        self.sfx:playFX("lose", "multi")
         self.sfx.fxPlayed = false
     end
     if state == "paused" then
         love.graphics.setColor(r, g, b, 0.5)
         self.sfx:stopBGM()
+        self.sfx:stop()
         Opacity = 0.5
     else
         love.graphics.setColor(r, g, b, 1)
@@ -79,6 +81,7 @@ end
 
 -- Method to update game state
 function Game:update(dt)
+    self.menu:update(love.mouse.getX(), love.mouse.getY(), dt)
     if self.state.running then
         self.background:update(dt, 1, 0, false)
     elseif self.state.menu then
@@ -112,7 +115,7 @@ function Game:draw()
         self.background:draw()
         love.graphics.setColor(r, g, b, 1)
         love.graphics.setFont(love.graphics.newFont(55))
-        love.graphics.printf("Ezz can't think of a title", 0, WindowHeight / 4, WindowWidth, "center")
+        love.graphics.printf("SpaceLuaLOVE", 0, WindowHeight / 4, WindowWidth, "center")
         love.graphics.setFont(love.graphics.newFont(12))
         self.menu:draw("main")
     elseif self.state.paused then
