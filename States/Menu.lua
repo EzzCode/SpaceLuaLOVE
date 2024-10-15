@@ -1,4 +1,4 @@
-local Button = require 'Objects.Button'
+local Button = require 'Components.Button'
 
 local Menu = {}
 Menu.__index = Menu
