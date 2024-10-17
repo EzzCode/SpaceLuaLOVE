@@ -62,7 +62,7 @@ SpaceLuaLOVE is a fun and engaging project that demonstrates my skills in Lua an
 ## Images
 
 ### Menu Screen
-![Menu Screen](path/to/menu_screen.png)
+![Menu Screen](https://github.com/user-attachments/assets/ef832add-7728-4a55-a35e-f7bf3859af65)
 
 ### Game Level
-![Game Level](path/to/game_level.png)
+![Game Level](https://github.com/user-attachments/assets/aaee1c85-47cc-4136-9d8c-2fea3035706a)
